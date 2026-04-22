@@ -25,7 +25,7 @@ RULES:
    - Dynamics → how the scene transforms (flat = frozen moment; wide dynamics = dramatic shifts)
    - Texture → surface quality (smooth = glass, water, silk; gritty = rust, gravel, static)
    - Density → how crowded/layered the scene is (sparse = empty desert; dense = overgrown jungle)
-5. Return EXACTLY 6 scenes.
+5. Return EXACTLY 4 scenes.
 6. For each scene, also suggest a color palette (3-4 hex colors) that captures its mood.
 
 Respond in this exact JSON format:
@@ -68,10 +68,10 @@ async def generate_associations(features: dict, metadata: dict | None = None) ->
         if metadata.get("genre"):
             user_content += f"- Genre: {metadata['genre']}\n"
 
-    user_content += "\n\nBased on these features, generate 6 vivid synesthetic scene associations."
+    user_content += "\n\nBased on these features, generate 4 vivid synesthetic scene associations."
 
     message = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-5",
         max_tokens=2000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_content}],

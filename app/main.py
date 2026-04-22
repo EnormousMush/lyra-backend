@@ -11,6 +11,9 @@ import tempfile
 import subprocess
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +21,7 @@ from pydantic import BaseModel
 
 from .audio import extract_features
 from .associations import generate_associations
+from .images import generate_images_for_scenes
 
 app = FastAPI(
     title="Synesthesia",
@@ -85,6 +89,12 @@ async def analyze_upload(
 
         associations = await generate_associations(features, metadata or None)
 
+        scenes = associations.get("scenes", [])[:4]
+        images = await generate_images_for_scenes(scenes)
+        for scene, img in zip(scenes, images):
+            scene["image"] = img
+        associations["scenes"] = scenes
+
         return AnalysisResponse(features=features, associations=associations)
     finally:
         os.unlink(tmp_path)
@@ -136,6 +146,12 @@ async def analyze_url(request: URLRequest):
             metadata["artist"] = request.artist
 
         associations = await generate_associations(features, metadata or None)
+
+        scenes = associations.get("scenes", [])[:4]
+        images = await generate_images_for_scenes(scenes)
+        for scene, img in zip(scenes, images):
+            scene["image"] = img
+        associations["scenes"] = scenes
 
         return AnalysisResponse(features=features, associations=associations)
 
