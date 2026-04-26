@@ -28,7 +28,13 @@ def get_session(sid: str) -> dict | None:
     return _sessions.get(sid)
 
 
-def append_message(sid: str, role: str, content: str) -> None:
+def append_message(sid: str, role: str, content: Any) -> None:
+    """Append a message to a session's history.
+
+    `content` may be a plain string (normal user/assistant text) or a list
+    of Anthropic content blocks (used for tool_use / tool_result round-trips).
+    Both forms are accepted by the Anthropic messages API.
+    """
     s = _sessions.get(sid)
     if s is not None:
         s["history"].append({"role": role, "content": content})

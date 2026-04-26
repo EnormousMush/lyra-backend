@@ -1,38 +1,42 @@
 """
-images.py — Generate images from scene descriptions using Gemini 2.5 Flash Image
-(a.k.a. "Nano Banana"). One image per scene, generated in parallel.
+images.py — Generate a single image from a scene description using
+Gemini 2.5 Flash Image (a.k.a. "Nano Banana").
+
+Exposed as a Claude tool from app/chat.py: Claude only invokes this
+when the user explicitly asks for a visual.
 """
 
 import os
 import base64
-import asyncio
 
 from google import genai
 
 
 # Tweak this to shape the aesthetic of every generated image.
-# Keep it consistent so the 4 scenes feel like a cohesive visual set.
 STYLE_SUFFIX = (
-    "Photorealistic, cinematic still, 35mm film, natural light, "
-    "shallow depth of field, high detail, evocative composition, no text."
+    "Photorealistic natural landscape, cinematic still, 35mm film, natural light, "
+    "shallow depth of field, high detail, evocative composition. "
+    "No people, no human figures, no faces, no silhouettes, no body parts, "
+    "no man-made structures except subtle distant ones if essential, no text."
 )
 
 
 _client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
-def _build_prompt(scene: dict) -> str:
-    description = scene.get("description", "").strip()
-    colors = scene.get("colors", [])
-    parts = [description]
-    if colors:
-        parts.append(f"Color palette: {', '.join(colors)}.")
+async def generate_one(description: str, style_hints: str | None = None) -> str:
+    """Generate one image from a scene description.
+
+    Returns a base64 data URL ('data:image/png;base64,...') suitable for
+    embedding directly in HTML <img src=...> or sending over SSE.
+    Raises RuntimeError if Gemini returned no image data.
+    """
+    parts = [description.strip()]
+    if style_hints:
+        parts.append(style_hints.strip())
     parts.append(STYLE_SUFFIX)
-    return " ".join(parts)
+    prompt = " ".join(p for p in parts if p)
 
-
-async def _generate_one(scene: dict) -> str | None:
-    prompt = _build_prompt(scene)
     response = await _client.aio.models.generate_content(
         model="gemini-2.5-flash-image",
         contents=prompt,
@@ -42,12 +46,4 @@ async def _generate_one(scene: dict) -> str | None:
             b64 = base64.b64encode(part.inline_data.data).decode("ascii")
             mime = part.inline_data.mime_type or "image/png"
             return f"data:{mime};base64,{b64}"
-    return None
-
-
-async def generate_images_for_scenes(scenes: list[dict]) -> list[str | None]:
-    """Generate one image per scene, in parallel. Returns data-URL strings (or None on failure)."""
-    return await asyncio.gather(
-        *(_generate_one(s) for s in scenes),
-        return_exceptions=False,
-    )
+    raise RuntimeError("Gemini returned no image data")
