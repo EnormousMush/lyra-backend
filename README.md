@@ -38,6 +38,25 @@ uvicorn app.main:app --reload
 
 Open [http://localhost:8000/docs](http://localhost:8000/docs) for the interactive API explorer.
 
+## Daily startup (cheat sheet)
+
+Two terminals, both inside `~/seeingmusic`:
+
+**Terminal 1 — backend:**
+```bash
+source .venv/bin/activate
+uvicorn app.main:app --reload
+```
+
+**Terminal 2 — public tunnel (so the Lovable frontend can reach localhost):**
+```bash
+cloudflared tunnel --url http://localhost:8000
+```
+
+Copy the printed `https://*.trycloudflare.com` URL and paste it into the Lovable frontend's `BACKEND_URL` constant. The URL changes every cloudflared restart — that's expected until the backend is deployed.
+
+To shut down: `Ctrl+C` in each terminal. Nothing persists between runs (sessions are in-memory).
+
 ## Quick test
 
 Upload a file via Swagger to get a `session_id`, then:
