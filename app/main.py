@@ -1,14 +1,14 @@
 """
 main.py — FastAPI application for Synesthesia.
-Endpoints:
-  POST /analyze/upload   — upload an audio file
-  POST /analyze/url      — provide a YouTube/Spotify URL
-  GET  /health           — health check
+
+v2 architecture:
+  POST /upload   — upload an audio file, returns {session_id, features}
+  POST /chat     — streaming Q&A about the uploaded song (Phase C)
+  GET  /health   — health check
 """
 
 import os
 import tempfile
-import subprocess
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -16,20 +16,19 @@ load_dotenv()
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from .audio import extract_features
-from .associations import generate_associations
-from .images import generate_images_for_scenes
+from .analysis import extract_all_features
+from . import sessions, chat
 
 app = FastAPI(
     title="Synesthesia",
-    description="Turn music into vivid visual scenes",
-    version="0.1.0",
+    description="Chat with your music — analysis-aware Q&A over an uploaded song.",
+    version="0.2.0",
 )
 
-# Allow React dev server
+# CORS open for now; tighten for production / Lovable preview origin
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,121 +38,61 @@ app.add_middleware(
 )
 
 
-class URLRequest(BaseModel):
-    url: str
-    title: str | None = None
-    artist: str | None = None
+ALLOWED_SUFFIXES = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
 
-
-class AnalysisResponse(BaseModel):
-    features: dict
-    associations: dict
-
-
-# ---- Endpoints ----
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "synesthesia"}
+    return {"status": "ok", "service": "synesthesia", "version": "0.2.0"}
 
 
-@app.post("/analyze/upload", response_model=AnalysisResponse)
-async def analyze_upload(
-    file: UploadFile = File(...),
-    title: str | None = None,
-    artist: str | None = None,
-):
-    """Analyze an uploaded audio file."""
-    # Validate file type
-    allowed = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".wma"}
-    suffix = Path(file.filename).suffix.lower()
-    if suffix not in allowed:
-        raise HTTPException(400, f"Unsupported format: {suffix}. Use: {', '.join(allowed)}")
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    """Upload an audio file. Runs analysis, stores features in a session,
+    and returns a session_id the client uses for subsequent /chat calls.
+    """
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in ALLOWED_SUFFIXES:
+        raise HTTPException(
+            400,
+            f"Unsupported format: {suffix or '(none)'}. "
+            f"Use one of: {', '.join(sorted(ALLOWED_SUFFIXES))}",
+        )
 
-    # Save to temp file
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        content = await file.read()
-        tmp.write(content)
+        tmp.write(await file.read())
         tmp_path = tmp.name
 
     try:
-        # Extract features
-        features = extract_features(tmp_path)
-
-        # Generate associations
-        metadata = {}
-        if title:
-            metadata["title"] = title
-        if artist:
-            metadata["artist"] = artist
-
-        associations = await generate_associations(features, metadata or None)
-
-        scenes = associations.get("scenes", [])[:4]
-        images = await generate_images_for_scenes(scenes)
-        for scene, img in zip(scenes, images):
-            scene["image"] = img
-        associations["scenes"] = scenes
-
-        return AnalysisResponse(features=features, associations=associations)
+        features = extract_all_features(tmp_path)
     finally:
         os.unlink(tmp_path)
 
+    session_id = sessions.create_session(
+        features=features,
+        metadata={"filename": file.filename},
+    )
+    return {"session_id": session_id, "features": features}
 
-@app.post("/analyze/url", response_model=AnalysisResponse)
-async def analyze_url(request: URLRequest):
-    """Analyze a song from a YouTube or other URL using yt-dlp."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        output_path = os.path.join(tmp_dir, "audio.wav")
 
-        # Download audio with yt-dlp
-        try:
-            result = subprocess.run(
-                [
-                    "yt-dlp",
-                    "--extract-audio",
-                    "--audio-format", "wav",
-                    "--output", output_path,
-                    "--no-playlist",
-                    "--max-filesize", "50M",
-                    request.url,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            if result.returncode != 0:
-                raise HTTPException(400, f"Failed to download audio: {result.stderr[:200]}")
-        except subprocess.TimeoutExpired:
-            raise HTTPException(408, "Download timed out")
-        except FileNotFoundError:
-            raise HTTPException(500, "yt-dlp not installed. Run: pip install yt-dlp")
+class ChatRequest(BaseModel):
+    session_id: str
+    message: str
 
-        # yt-dlp may add extension, find the actual file
-        actual_files = list(Path(tmp_dir).glob("audio*"))
-        if not actual_files:
-            raise HTTPException(500, "Audio download produced no output file")
-        audio_file = str(actual_files[0])
 
-        # Extract features
-        features = extract_features(audio_file)
+@app.post("/chat")
+async def chat_endpoint(req: ChatRequest):
+    """Streaming chat about the uploaded song. Returns Server-Sent Events.
 
-        # Generate associations
-        metadata = {}
-        if request.title:
-            metadata["title"] = request.title
-        if request.artist:
-            metadata["artist"] = request.artist
+    Each event is `data: {"type": "text"|"done"|"error", "content": "..."}\\n\\n`.
+    """
+    if sessions.get_session(req.session_id) is None:
+        raise HTTPException(404, f"session_id not found: {req.session_id}")
 
-        associations = await generate_associations(features, metadata or None)
-
-        scenes = associations.get("scenes", [])[:4]
-        images = await generate_images_for_scenes(scenes)
-        for scene, img in zip(scenes, images):
-            scene["image"] = img
-        associations["scenes"] = scenes
-
-        return AnalysisResponse(features=features, associations=associations)
+    return StreamingResponse(
+        chat.stream_chat(req.session_id, req.message),
+        media_type="text/event-stream",
+    )
 
 
 if __name__ == "__main__":
