@@ -1,3 +1,5 @@
+> Historical: this document describes v2 (the chat version on `main`). See README.md for v3.
+
 # API Contract
 
 This is the agreed surface between the `seeingmusic` backend and any client (Lovable frontend, curl tests, future native apps). Treat it as authoritative — if the code drifts from this doc, fix the code or update this doc, don't let them disagree silently.

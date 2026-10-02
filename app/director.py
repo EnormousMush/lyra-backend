@@ -280,7 +280,7 @@ def _mock_direct(listening, mode, style_text, count, targets, parent, direction)
         motif = motifs[i % len(motifs)]
         if mode == "scenes":
             s = targets[i]
-            title = f"{s['label']} {s['index'] + 1}"
+            title = motif.title()
             mood = "quiet, sparse" if s["energy"] < 0.35 else "swelling, luminous" if s["energy"] < 0.75 else "full, blazing"
             prompt = f"{motif}, {mood} scene for the {s['label'].lower()}, {style_text}"
         elif base:

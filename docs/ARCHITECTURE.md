@@ -1,3 +1,5 @@
+> Historical: this document describes v2 (the chat version on `main`). See README.md for v3.
+
 # Architecture
 
 ## Goal
