@@ -50,3 +50,6 @@ yarn-error.log*
 tmp/
 temp/
 *.tmp
+
+# ---- Lyra local data (database, uploads, renders) ----
+storage/
