@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { Wordmark } from "../components/Shell";
-import PaletteArt from "../components/PaletteArt";
 
 function Frame({ children, title, sub }: { children: React.ReactNode; title: string; sub: string }) {
   return (
@@ -18,17 +17,7 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
           <div className="mt-9">{children}</div>
         </div>
       </div>
-      <div className="relative hidden overflow-hidden lg:block">
-        <PaletteArt
-          palette={["#18223a", "#3a4f7a", "#c9786a", "#f0bf7a", "#fbecd4"]}
-          seed={20261002}
-          energy={0.7}
-          className="absolute inset-0 h-full w-full"
-        />
-        <p className="voice absolute bottom-10 left-10 right-10 max-w-[28ch] text-2xl text-white/90">
-          A warm key, a slow arc, one bright chorus.
-        </p>
-      </div>
+      <div className="hidden bg-black lg:block" aria-hidden />
     </div>
   );
 }
