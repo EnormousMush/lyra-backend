@@ -29,6 +29,7 @@ function Field(props: {
   onChange: (v: string) => void;
   autoComplete?: string;
   placeholder?: string;
+  optional?: boolean;
 }) {
   return (
     <label className="block">
@@ -40,7 +41,7 @@ function Field(props: {
         autoComplete={props.autoComplete}
         placeholder={props.placeholder}
         onChange={(e) => props.onChange(e.target.value)}
-        required
+        required={!props.optional}
       />
     </label>
   );
@@ -123,7 +124,7 @@ export function Signup() {
         <Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="new-password" />
         <p className="text-xs text-slate">At least 8 characters.</p>
         {policy.data?.invite_only && (
-          <Field label="Invite code" value={invite} onChange={setInvite} placeholder="8 characters" autoComplete="off" />
+          <Field label="Invite code" value={invite} onChange={setInvite} placeholder="8 characters" autoComplete="off" optional />
         )}
         <p className="text-xs text-slate">
           By creating an account you agree to the{" "}
