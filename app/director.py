@@ -69,16 +69,63 @@ def _sections_text(sections: list) -> str:
         for s in sections)
 
 
-async def _call_tool(system: str, user: str, tool: dict, max_tokens: int = 2500) -> dict:
-    resp = await _claude().messages.create(
-        model=config.CLAUDE_MODEL, max_tokens=max_tokens, system=system,
-        messages=[{"role": "user", "content": user}],
-        tools=[tool], tool_choice={"type": "tool", "name": tool["name"]},
-    )
+_UNSUPPORTED = {"minItems", "maxItems", "minimum", "maximum", "minLength", "maxLength",
+                "exclusiveMinimum", "exclusiveMaximum", "minProperties", "maxProperties"}
+
+
+def _strict(schema, drop: tuple = ()) -> dict:
+    """Make a tool input schema valid for structured outputs: unsupported length constraints move
+    into the description, every object is closed and lists all its properties as required."""
+    if isinstance(schema, list):
+        return [_strict(x) for x in schema]
+    if not isinstance(schema, dict):
+        return schema
+    out, notes = {}, []
+    for k, v in schema.items():
+        if k in _UNSUPPORTED:
+            notes.append(f"{k}: {v}")
+        elif k == "properties":
+            out[k] = {pk: _strict(pv) for pk, pv in v.items() if pk not in drop}
+        else:
+            out[k] = _strict(v) if isinstance(v, (dict, list)) else v
+    if notes:
+        out["description"] = (out.get("description", "") + f" ({', '.join(notes)})").strip()
+    if out.get("type") == "object" and "properties" in out:
+        out["required"] = list(out["properties"].keys())
+        out["additionalProperties"] = False
+    return out
+
+
+def _first_json(resp) -> dict:
     for block in resp.content:
+        if block.type == "text" and block.text.strip():
+            txt = block.text.strip()
+            if txt.startswith("```"):
+                txt = txt.strip("`").split("\n", 1)[-1]
+            return json.loads(txt)
         if block.type == "tool_use":
             return block.input
     raise RuntimeError("Claude did not return structured output.")
+
+
+async def _call_tool(system: str, user: str, tool: dict, max_tokens: int = 2500, drop: tuple = ()) -> dict:
+    """Structured output via output_config.format (JSON schema). Some models reject a forced
+    tool_choice, so tools are only a fallback, with tool_choice auto."""
+    from anthropic import BadRequestError
+    schema = _strict(tool["input_schema"], drop)
+    base = dict(model=config.CLAUDE_MODEL, max_tokens=max_tokens, system=system,
+                messages=[{"role": "user", "content": user}])
+    try:
+        resp = await _claude().messages.create(
+            **base, extra_body={"output_config": {"format": {"type": "json_schema", "schema": schema}}})
+        return _first_json(resp)
+    except BadRequestError as e:
+        if "output_config" not in str(e) and "format" not in str(e):
+            raise
+    resp = await _claude().messages.create(
+        **{**base, "messages": [{"role": "user", "content": user + f"\n\nAnswer only by calling {tool['name']}."}]},
+        tools=[{**tool, "input_schema": schema}], tool_choice={"type": "auto"})
+    return _first_json(resp)
 
 
 # ------------------------------------------------------------------ listen
@@ -149,7 +196,8 @@ async def listen(features: dict, sections: list, percentiles: dict, data_dna: di
         top = {f: data_dna["factors"][f][0]["value"] for f in data_dna["factors"]}
         parts.append(f"The nearest Suno prompts in feature space suggest: {data_dna['prompt']} "
                      f"(factors {json.dumps(top)}). Use this as context. Do not return a dna field.")
-    out = await _call_tool(LISTEN_SYSTEM, "\n\n".join(parts), LISTEN_TOOL)
+    out = await _call_tool(LISTEN_SYSTEM, "\n\n".join(parts), LISTEN_TOOL,
+                           drop=() if estimate else ("dna",))
     if estimate and out.get("dna"):
         d = out["dna"]
         out["dna"] = {
