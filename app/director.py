@@ -97,6 +97,8 @@ def _strict(schema, drop: tuple = ()) -> dict:
 
 
 def _first_json(resp) -> dict:
+    if getattr(resp, "stop_reason", None) == "max_tokens":
+        raise RuntimeError("Claude ran out of room while writing the briefs. Try fewer images at once.")
     for block in resp.content:
         if block.type == "text" and block.text.strip():
             txt = block.text.strip()
@@ -108,7 +110,7 @@ def _first_json(resp) -> dict:
     raise RuntimeError("Claude did not return structured output.")
 
 
-async def _call_tool(system: str, user: str, tool: dict, max_tokens: int = 2500, drop: tuple = ()) -> dict:
+async def _call_tool(system: str, user: str, tool: dict, max_tokens: int = 8000, drop: tuple = ()) -> dict:
     """Structured output via output_config.format (JSON schema). Some models reject a forced
     tool_choice, so tools are only a fallback, with tool_choice auto."""
     from anthropic import BadRequestError
@@ -312,7 +314,7 @@ async def direct(*, features: dict, listening: dict, sections: list, percentiles
     out = await _call_tool(
         "You are the art director of Lyra. You write precise prompts for an image model so that each "
         "image is a believable visual translation of the measured music.",
-        "\n\n".join(user), DIRECT_TOOL, max_tokens=4000)
+        "\n\n".join(user), DIRECT_TOOL, max_tokens=16000)
     briefs = out.get("briefs", [])[:n]
     if len(briefs) < n:
         raise RuntimeError(f"Claude returned {len(briefs)} briefs for {n} images.")
