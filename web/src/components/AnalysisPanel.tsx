@@ -86,7 +86,7 @@ function Dna({ t }: { t: TrackDetail }) {
                       <span className="h-1.5 w-20 overflow-hidden rounded-full bg-rule/60">
                         <span
                           className="block h-full rounded-full"
-                          style={{ width: `${Math.round(x.share * 100)}%`, background: i === 0 ? "var(--accent)" : "#8c9298" }}
+                          style={{ width: `${Math.round(x.share * 100)}%`, background: i === 0 ? "var(--accent)" : "#6a6f78" }}
                         />
                       </span>
                       <span className="num w-9 text-right text-xs text-slate">{Math.round(x.share * 100)}%</span>

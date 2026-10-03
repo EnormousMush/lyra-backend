@@ -9,18 +9,18 @@ import { useMe, useMeta } from "../lib/hooks";
 export function LyraMark({ size = 32 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <g stroke="#202326" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75">
+      <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75">
         <path d="M8.5 7.5 L15.5 6 L13 12.5 Z" />
         <path d="M13 12.5 L21.5 14 L23.5 26 L15.2 24.6 Z" />
       </g>
-      <g fill="#202326">
+      <g fill="currentColor">
         <circle cx="15.5" cy="6" r="1.8" />
         <circle cx="13" cy="12.5" r="1.9" />
         <circle cx="21.5" cy="14" r="1.7" />
         <circle cx="23.5" cy="26" r="2" />
         <circle cx="15.2" cy="24.6" r="2" />
       </g>
-      <path d="M8.5 1 L9.7 6.3 L15 7.5 L9.7 8.7 L8.5 14 L7.3 8.7 L2 7.5 L7.3 6.3 Z" fill="#3352c4" />
+      <path d="M8.5 1 L9.7 6.3 L15 7.5 L9.7 8.7 L8.5 14 L7.3 8.7 L2 7.5 L7.3 6.3 Z" fill="var(--color-vega)" />
     </svg>
   );
 }

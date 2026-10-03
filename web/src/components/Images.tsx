@@ -2,21 +2,39 @@ import { useEffect } from "react";
 import type { Generation } from "../lib/api";
 import { ASPECT_RATIO } from "../lib/format";
 
+/** Where the user clicked, as viewport percentages, so the lightbox can open from that point. */
+export function setOrigin(e: React.MouseEvent) {
+  document.documentElement.style.setProperty("--ox", `${(e.clientX / window.innerWidth) * 100}%`);
+  document.documentElement.style.setProperty("--oy", `${(e.clientY / window.innerHeight) * 100}%`);
+}
+
 export function ImageTile({ g, onOpen, caption }: { g: Generation; onOpen: (g: Generation) => void; caption?: string }) {
   const ratio = ASPECT_RATIO[g.aspect] ?? "1 / 1";
+  const done = g.status === "done";
   return (
     <figure className="min-w-0">
       <button
-        onClick={() => g.status === "done" && onOpen(g)}
-        disabled={g.status !== "done"}
-        className="group relative block w-full overflow-hidden rounded-[8px] bg-paper text-left disabled:cursor-default"
+        onClick={(e) => {
+          if (!done) return;
+          setOrigin(e);
+          onOpen(g);
+        }}
+        disabled={!done}
+        data-cursor={done ? "open" : undefined}
+        className="tile block w-full text-left disabled:cursor-default"
         style={{ aspectRatio: ratio }}
-        aria-label={g.status === "done" ? `Open ${g.title}` : undefined}
+        aria-label={done ? `Open ${g.title}` : undefined}
       >
-        {g.status === "done" && g.image_url ? (
-          <img src={g.image_url} alt={g.title ?? ""} className="develop h-full w-full object-cover" loading="lazy" />
+        {done && g.image_url ? (
+          <>
+            <img src={g.image_url} alt={g.title ?? ""} className="develop" loading="lazy" />
+            <span className="veil">
+              <span className="display text-2xl leading-tight text-white">{g.title}</span>
+              {g.rationale && <span className="voice mt-1 line-clamp-2 text-sm text-white/80">{g.rationale}</span>}
+            </span>
+          </>
         ) : g.status === "error" ? (
-          <div className="flex h-full w-full flex-col justify-end bg-[#efe3e1] p-3">
+          <div className="flex h-full w-full flex-col justify-end bg-[#2a1d1d] p-3">
             <span className="text-sm font-medium text-alarm">Not painted</span>
             <span className="mt-1 line-clamp-3 text-xs text-graphite/80">{g.error}</span>
           </div>
@@ -45,9 +63,9 @@ export function ImageTile({ g, onOpen, caption }: { g: Generation; onOpen: (g: G
           <span className="absolute bottom-2 left-2 rounded-full bg-graphite/70 px-2 py-0.5 text-[0.65rem] text-paper">Preview render</span>
         )}
       </button>
-      <figcaption className="mt-2 flex items-baseline justify-between gap-2">
-        <span className="truncate text-sm">{g.title ?? caption ?? "Untitled"}</span>
-        {caption && g.title && <span className="shrink-0 text-xs text-slate">{caption}</span>}
+      <figcaption className="mt-2 flex items-baseline justify-between gap-2 text-sm">
+        <span className="truncate text-slate">{g.title ?? "Untitled"}</span>
+        {caption && <span className="num shrink-0 text-xs text-mist">{caption}</span>}
       </figcaption>
     </figure>
   );
@@ -79,12 +97,12 @@ export function Lightbox({ g, onClose, onFavorite, onVary, styleLabel, trackTitl
       role="dialog"
       aria-modal="true"
       aria-label={g.title ?? "Image"}
-      className="fixed inset-0 z-40 flex items-stretch bg-[#202326]/92 backdrop-blur-sm max-lg:flex-col max-lg:overflow-y-auto"
+      className="iris fixed inset-0 z-40 flex items-stretch bg-[#0f1012]/96 backdrop-blur-sm max-lg:flex-col max-lg:overflow-y-auto"
       onClick={onClose}
     >
       <div className="flex min-h-0 flex-1 items-center justify-center p-4 sm:p-10" onClick={(e) => e.stopPropagation()}>
         {g.image_url && (
-          <img src={g.image_url} alt={g.title ?? ""} className="max-h-[86vh] max-w-full rounded-[6px] object-contain shadow-2xl" />
+          <img src={g.image_url} alt={g.title ?? ""} className="max-h-[86vh] max-w-full rounded-[6px] object-contain shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]" />
         )}
       </div>
       <aside

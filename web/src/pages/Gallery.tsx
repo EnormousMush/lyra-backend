@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, type Generation } from "../lib/api";
 import { useMeta } from "../lib/hooks";
 import { ASPECT_RATIO } from "../lib/format";
-import { Lightbox } from "../components/Images";
+import { Lightbox, setOrigin } from "../components/Images";
 import { useToast } from "../components/Toast";
 
 export default function Gallery() {
@@ -62,12 +62,20 @@ export default function Gallery() {
         {items.map((g) => (
           <figure key={g.id} className="mb-6 break-inside-avoid">
             <button
-              onClick={() => setOpen(g)}
-              className="block w-full overflow-hidden rounded-[8px] bg-paper"
+              onClick={(e) => {
+                setOrigin(e);
+                setOpen(g);
+              }}
+              data-cursor="open"
+              className="tile block w-full"
               style={{ aspectRatio: ASPECT_RATIO[g.aspect] ?? "1 / 1" }}
               aria-label={`Open ${g.title}`}
             >
-              {g.image_url && <img src={g.image_url} alt={g.title ?? ""} className="h-full w-full object-cover" loading="lazy" />}
+              {g.image_url && <img src={g.image_url} alt={g.title ?? ""} loading="lazy" />}
+              <span className="veil">
+                <span className="display text-2xl leading-tight text-white">{g.title}</span>
+                <span className="mt-1 text-sm text-white/70">{g.track_title}</span>
+              </span>
             </button>
             <figcaption className="mt-2 flex items-baseline justify-between gap-3">
               <span className="truncate text-sm">{g.title}</span>

@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-wall: #e4e6e3;
-  --color-paper: #f3f4f1;
-  --color-sheet: #fbfbf9;
-  --color-graphite: #202326;
-  --color-slate: #5e646b;
-  --color-mist: #8c9298;
-  --color-rule: #c9ccc7;
-  --color-vega: #3352c4;
-  --color-alarm: #b3261e;
-  --color-moss: #3f6b4a;
+  /* Dark studio. "graphite" is the text colour and "wall" the stage, so the class
+     names from the light version still read correctly: graphite on paper is ink on surface. */
+  --color-wall: #0f1012;
+  --color-paper: #17191d;
+  --color-sheet: #1e2126;
+  --color-graphite: #ecebe6;
+  --color-slate: #a2a6ad;
+  --color-mist: #6a6f78;
+  --color-rule: #2a2e35;
+  --color-vega: #7b93f5;
+  --color-alarm: #e5605a;
+  --color-moss: #7fbf8e;
 
   --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Newsreader Variable", ui-serif, Georgia, serif;
@@ -28,8 +30,8 @@
 :root {
   /* Replaced per track by <TrackAccent>, so the studio takes on the song's colour. */
   --accent: var(--color-vega);
-  --accent-ink: #ffffff;
-  color-scheme: light;
+  --accent-ink: #0f1012;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -44,7 +46,15 @@
     min-height: 100vh;
   }
   ::selection {
-    background: color-mix(in oklab, var(--accent) 30%, white);
+    background: color-mix(in oklab, var(--accent) 45%, transparent);
+  }
+  /* Custom cursor: the dot follows the pointer; it grows and labels itself over images. */
+  @media (hover: hover) and (pointer: fine) {
+    body.cursor-on,
+    body.cursor-on a,
+    body.cursor-on button {
+      cursor: none;
+    }
   }
   :focus-visible {
     outline: 2px solid var(--accent);
@@ -93,7 +103,7 @@
   color: var(--color-paper);
 }
 .btn-primary:hover:not(:disabled) {
-  background: #000;
+  background: #ffffff;
 }
 .btn-accent {
   background: var(--accent);
@@ -126,7 +136,7 @@
 }
 .field:focus {
   outline: none;
-  border-color: var(--color-graphite);
+  border-color: var(--color-slate);
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
 }
 
@@ -184,5 +194,173 @@
   .develop,
   .breathe {
     animation: none;
+  }
+}
+
+/* ---------- motion ---------- */
+.cursor-dot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  pointer-events: none;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 999px;
+  background: var(--color-graphite);
+  mix-blend-mode: difference;
+  transition: width 220ms cubic-bezier(0.2, 0.7, 0.2, 1), height 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    margin 220ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 200ms;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: transparent;
+  will-change: transform;
+}
+.cursor-dot[data-mode="open"] {
+  width: 76px;
+  height: 76px;
+  margin: -38px 0 0 -38px;
+  background: var(--color-graphite);
+  color: var(--color-wall);
+  mix-blend-mode: normal;
+}
+.cursor-dot[data-mode="drag"] {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  background: transparent;
+  border: 1.5px solid var(--color-graphite);
+  mix-blend-mode: normal;
+}
+.cursor-dot[data-mode="hidden"] {
+  opacity: 0;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.rise-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.06em;
+}
+.rise-mask > span {
+  display: block;
+  animation: rise 1100ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes drift-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--fx, 0px), var(--fy, 40px)) rotate(var(--fr, 0deg)) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) rotate(var(--r, 0deg)) scale(1);
+  }
+}
+.drift-in {
+  animation: drift-in 1400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Image tiles: the caption slides up over the image on hover, like a video card. */
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--color-paper);
+}
+.tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tile:hover img {
+  transform: scale(1.04);
+}
+.tile .veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1rem;
+  background: linear-gradient(to top, rgba(10, 10, 12, 0.82), rgba(10, 10, 12, 0) 60%);
+  opacity: 0;
+  transition: opacity 320ms;
+}
+.tile .veil > * {
+  transform: translateY(10px);
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tile:hover .veil,
+.tile:focus-visible .veil {
+  opacity: 1;
+}
+.tile:hover .veil > *,
+.tile:focus-visible .veil > * {
+  transform: translateY(0);
+}
+
+/* Lightbox opens through an expanding circle from where the user clicked. */
+@keyframes iris {
+  from {
+    clip-path: circle(0% at var(--ox, 50%) var(--oy, 50%));
+  }
+  to {
+    clip-path: circle(150% at var(--ox, 50%) var(--oy, 50%));
+  }
+}
+.iris {
+  animation: iris 700ms cubic-bezier(0.3, 0.7, 0.2, 1) both;
+}
+
+/* Scroll reveal for landing sections. */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 900ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Library sleeves tilt toward the pointer. */
+.sleeve {
+  transform-style: preserve-3d;
+  transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 500ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-mask > span,
+  .drift-in,
+  .iris {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .tile img,
+  .sleeve {
+    transition: none;
+  }
+  .cursor-dot {
+    display: none;
   }
 }

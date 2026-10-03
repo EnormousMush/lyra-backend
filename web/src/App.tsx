@@ -10,12 +10,14 @@ import Atlas from "./pages/Atlas";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Terms from "./pages/Terms";
+import Cursor from "./components/Cursor";
 
 function RequireAuth() {
   const me = useMe();
   const loc = useLocation();
   if (me.isLoading) return <div className="min-h-screen" />;
-  if (!me.data) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  if (!me.data)
+    return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   return <Outlet />;
 }
 
@@ -28,23 +30,26 @@ function GuestOnly() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route element={<GuestOnly />}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Route>
-      <Route element={<RequireAuth />}>
-        <Route element={<Shell />}>
-          <Route path="/library" element={<Library />} />
-          <Route path="/t/:id" element={<Studio />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/atlas" element={<Atlas />} />
-          <Route path="/settings" element={<Settings />} />
+    <>
+      <Cursor />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route element={<GuestOnly />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
         </Route>
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route element={<RequireAuth />}>
+          <Route element={<Shell />}>
+            <Route path="/library" element={<Library />} />
+            <Route path="/t/:id" element={<Studio />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/atlas" element={<Atlas />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 }

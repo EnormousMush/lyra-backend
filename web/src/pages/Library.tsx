@@ -53,8 +53,8 @@ function Dropzone() {
     >
       <input ref={input} type="file" accept={ACCEPT} className="hidden" onChange={(e) => send(e.target.files?.[0])} />
       <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden className="shrink-0">
-        <circle cx="22" cy="22" r="21" fill="none" stroke="#202326" strokeWidth="1.2" />
-        <path d="M22 13v18M14 21l8-8 8 8" fill="none" stroke="#202326" strokeWidth="1.4" />
+        <circle cx="22" cy="22" r="21" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M22 13v18M14 21l8-8 8 8" fill="none" stroke="currentColor" strokeWidth="1.4" />
       </svg>
       <span className="min-w-0">
         <span className="block text-lg font-medium">{busy ? "Uploading" : "Drop a song here, or choose a file"}</span>
@@ -66,11 +66,25 @@ function Dropzone() {
   );
 }
 
+function tilt(e: React.MouseEvent<HTMLDivElement>) {
+  const r = e.currentTarget.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width - 0.5;
+  const py = (e.clientY - r.top) / r.height - 0.5;
+  e.currentTarget.style.transform = `perspective(900px) rotateX(${-py * 10}deg) rotateY(${px * 12}deg) translateY(-4px)`;
+}
+function untilt(e: React.MouseEvent<HTMLDivElement>) {
+  e.currentTarget.style.transform = "";
+}
+
 function Sleeve({ t }: { t: TrackSummary }) {
   const working = t.stage !== "ready" && t.stage !== "error";
   return (
-    <Link to={`/t/${t.id}`} className="group block">
-      <div className="relative aspect-square overflow-hidden rounded-[10px] bg-paper shadow-[0_1px_0_rgba(32,35,38,0.08),0_10px_28px_-14px_rgba(32,35,38,0.45)] transition-transform duration-200 group-hover:-translate-y-0.5">
+    <Link to={`/t/${t.id}`} className="group block" data-cursor="open" data-cursor-label="Open">
+      <div
+        onMouseMove={tilt}
+        onMouseLeave={untilt}
+        className="sleeve relative aspect-square overflow-hidden rounded-[10px] bg-paper shadow-[0_30px_60px_-24px_rgba(0,0,0,0.8)]"
+      >
         {t.cover_url ? (
           <img src={t.cover_url} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : t.palette.length ? (

@@ -106,7 +106,7 @@ export default function Timeline({ audioUrl, waveform, sections, duration, selec
                   width={1.8}
                   height={h}
                   rx={0.9}
-                  fill={played ? "var(--accent)" : "#202326"}
+                  fill={played ? "var(--accent)" : "#ecebe6"}
                   opacity={played ? 1 : 0.78}
                 />
               );
@@ -145,7 +145,7 @@ export default function Timeline({ audioUrl, waveform, sections, duration, selec
               <span className="mt-1 block h-1 overflow-hidden rounded-full bg-rule/60">
                 <span
                   className="block h-full rounded-full"
-                  style={{ width: `${10 + s.energy * 90}%`, background: on || !selectable ? "var(--accent)" : "#8c9298" }}
+                  style={{ width: `${10 + s.energy * 90}%`, background: on || !selectable ? "var(--accent)" : "#6a6f78" }}
                 />
               </span>
             </button>

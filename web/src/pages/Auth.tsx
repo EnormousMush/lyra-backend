@@ -17,7 +17,7 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
           <div className="mt-9">{children}</div>
         </div>
       </div>
-      <div className="hidden bg-[#2a2d31] lg:block" aria-hidden />
+      <div className="hidden bg-[#17191d] lg:block" aria-hidden />
     </div>
   );
 }

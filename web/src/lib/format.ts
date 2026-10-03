@@ -33,17 +33,17 @@ function chroma([r, g, b]: [number, number, number]) {
   return Math.max(r, g, b) - Math.min(r, g, b);
 }
 
-/** Pick the most saturated palette colour and darken it until it reads on the paper surface. */
+/** Pick the most saturated palette colour and lighten it until it reads on the dark stage. */
 export function accentFromPalette(palette: string[] | undefined | null) {
-  const paper: [number, number, number] = [243, 244, 241];
+  const stage: [number, number, number] = [15, 16, 18];
   const rgbs = (palette || []).map(hexToRgb).filter(Boolean) as [number, number, number][];
   if (!rgbs.length) return null;
   let best = rgbs.reduce((a, b) => (chroma(b) > chroma(a) ? b : a));
   let guard = 0;
-  while (contrast(best, paper) < 4.5 && guard++ < 20) {
-    best = best.map((v) => Math.round(v * 0.9)) as [number, number, number];
+  while (contrast(best, stage) < 4.5 && guard++ < 24) {
+    best = best.map((v) => Math.min(255, Math.round(v + (255 - v) * 0.12))) as [number, number, number];
   }
-  const ink = contrast(best, [255, 255, 255]) >= 4.5 ? "#ffffff" : "#202326";
+  const ink = contrast(best, [15, 16, 18]) >= 4.5 ? "#0f1012" : "#ffffff";
   return { accent: `rgb(${best.join(",")})`, ink };
 }
 

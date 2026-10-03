@@ -60,7 +60,7 @@ function Signature({ data, factor, value }: { data: AtlasPayload; factor: Factor
                   style={{
                     left: r.d >= 0 ? "50%" : `${50 - w}%`,
                     width: `${w}%`,
-                    background: r.d >= 0 ? "#3352c4" : "#b8743c",
+                    background: r.d >= 0 ? "var(--color-vega)" : "#d49a5a",
                     opacity: Math.abs(r.d) < 0.2 ? 0.35 : 1,
                   }}
                 />
