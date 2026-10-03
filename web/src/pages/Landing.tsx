@@ -100,7 +100,7 @@ export default function Landing() {
 
       <main>
         <section className="relative mx-auto min-h-[calc(100vh-4rem)] max-w-[1440px] px-5 md:px-10">
-          <div className="hidden md:block">
+          <div className="absolute inset-0 z-20 hidden md:block">
             <DragField cards={CARDS} />
           </div>
           <div className="pointer-events-none relative z-10 flex min-h-[calc(100vh-4rem)] flex-col justify-center pb-24 pt-10">
