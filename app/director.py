@@ -263,24 +263,28 @@ def _mock_listen(features: dict, data_dna: dict | None) -> dict:
 
 # ------------------------------------------------------------------ direct
 
-DIRECT_TOOL = {
-    "name": "submit_briefs",
-    "description": "Submit one image brief per requested image, in order.",
-    "input_schema": {
-        "type": "object",
-        "properties": {"briefs": {"type": "array", "items": {
-            "type": "object",
-            "properties": {
-                "title": {"type": "string", "description": "2 to 5 word title for the image."},
-                "prompt": {"type": "string", "description": "Complete prompt for the image model, 60 to 120 words: subject, setting, light, composition, colour, and the style direction."},
-                "rationale": {"type": "string", "description": "One sentence linking the image to specific measurements."},
-                "palette": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 5,
-                            "description": "Hex colours used in the image."},
-            },
-            "required": ["title", "prompt", "rationale", "palette"]}}},
-        "required": ["briefs"],
+BRIEF_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string", "description": "2 to 5 word title for the image."},
+        "prompt": {"type": "string", "description": "Complete prompt for the image model, 60 to 120 words: subject, setting, light, composition, colour, and the style direction."},
+        "rationale": {"type": "string", "description": "One sentence linking the image to specific measurements."},
+        "palette": {"type": "array", "items": {"type": "string"}, "minItems": 3, "maxItems": 5,
+                    "description": "Hex colours used in the image."},
     },
+    "required": ["title", "prompt", "rationale", "palette"],
 }
+
+
+def _direct_tool(n: int) -> dict:
+    """One named slot per image (image_1 ... image_n). Structured outputs cannot enforce an
+    array length, but every listed property is required, so this guarantees exactly n briefs."""
+    return {
+        "name": "submit_briefs",
+        "description": f"Submit exactly {n} image briefs, image_1 to image_{n}, in order.",
+        "input_schema": {"type": "object",
+                         "properties": {f"image_{i + 1}": BRIEF_SCHEMA for i in range(n)}},
+    }
 
 
 async def direct(*, features: dict, listening: dict, sections: list, percentiles: dict,
@@ -310,12 +314,12 @@ async def direct(*, features: dict, listening: dict, sections: list, percentiles
         user.append(f"Parent image prompt: {parent['prompt']}")
     if direction:
         user.append(f"The user's direction (follow it): {direction}")
-    user.append(f"Return exactly {n} briefs.")
+    user.append(f"Return exactly {n} briefs, as image_1 to image_{n}.")
     out = await _call_tool(
         "You are the art director of Lyra. You write precise prompts for an image model so that each "
         "image is a believable visual translation of the measured music.",
-        "\n\n".join(user), DIRECT_TOOL, max_tokens=16000)
-    briefs = out.get("briefs", [])[:n]
+        "\n\n".join(user), _direct_tool(n), max_tokens=16000)
+    briefs = [out[f"image_{i + 1}"] for i in range(n) if isinstance(out.get(f"image_{i + 1}"), dict)]
     if len(briefs) < n:
         raise RuntimeError(f"Claude returned {len(briefs)} briefs for {n} images.")
     return briefs
