@@ -136,12 +136,16 @@ class PasswordIn(BaseModel):
 def signup(body: SignupIn, response: Response, s: Session = Depends(get_session)):
     if s.exec(select(User).where(User.email == body.email)).first():
         raise HTTPException(409, "An account with this email already exists")
+    # Who may skip the invite and who becomes admin. When LYRA_ADMIN_EMAIL is set it is the
+    # only exemption, so a stranger cannot claim the first account on a fresh deploy.
     first_user = s.exec(select(User)).first() is None
+    is_admin_email = bool(config.ADMIN_EMAIL) and body.email == config.ADMIN_EMAIL
+    exempt = is_admin_email or (first_user and not config.ADMIN_EMAIL)
     invite = None
-    if config.INVITE_ONLY and not first_user and body.email != config.ADMIN_EMAIL:
+    if config.INVITE_ONLY and not exempt:
         invite = _valid_invite(s, body.invite)
     user = User(email=body.email, name=body.name, password_hash=hash_password(body.password),
-                is_admin=first_user or body.email == config.ADMIN_EMAIL)
+                is_admin=exempt)
     s.add(user)
     s.commit()
     s.refresh(user)
@@ -206,7 +210,7 @@ def change_password(body: PasswordIn, user: User = Depends(current_user), s: Ses
 def policy(s: Session = Depends(get_session)):
     """What the sign-up form needs to know before an account exists."""
     first_user = s.exec(select(User)).first() is None
-    return {"invite_only": config.INVITE_ONLY and not first_user,
+    return {"invite_only": config.INVITE_ONLY and not (first_user and not config.ADMIN_EMAIL),
             "daily_uploads": config.DAILY_UPLOADS, "daily_images": config.DAILY_IMAGES}
 
 

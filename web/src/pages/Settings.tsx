@@ -145,7 +145,6 @@ export default function Settings() {
     }
   };
   const s = meta.data?.services;
-  const atlas = meta.data?.atlas;
 
   return (
     <main className="mx-auto max-w-[1100px] px-5 pb-24 pt-10 md:px-8">
@@ -172,19 +171,6 @@ export default function Settings() {
             </div>
           )}
         </Block>
-        <Block title="Suno atlas" sub="Powers Prompt DNA matching and corpus percentiles.">
-          {atlas?.profiles_ready ? (
-            <p className="text-sm">
-              Built from {atlas.source_csv} with {atlas.n_songs_with_features.toLocaleString()} songs
-              {atlas.built_at ? ` on ${new Date(atlas.built_at).toLocaleDateString()}` : ""}.
-            </p>
-          ) : (
-            <p className="text-sm text-slate">
-              Not built yet. Prompt DNA is estimated by Claude until you run scripts/build_atlas.py with the research
-              feature table.
-            </p>
-          )}
-        </Block>
         <Block title="Usage" sub="Your allowance for today.">
           <Usage />
         </Block>
@@ -193,9 +179,6 @@ export default function Settings() {
             <Invites />
           </Block>
         )}
-        <Block title="About">
-          <p className="text-sm text-slate">Lyra Studio {meta.data?.version}. Runs entirely on this computer, apart from calls to the AI services above.</p>
-        </Block>
       </div>
     </main>
   );
