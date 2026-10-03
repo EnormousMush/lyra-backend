@@ -133,17 +133,6 @@ export default function Landing() {
             </div>
           ))}
         </section>
-
-        <section className="mt-28 grid items-end gap-10 md:grid-cols-[1.1fr_1fr]">
-          <blockquote className="voice max-w-[30ch] text-[clamp(1.6rem,3vw,2.4rem)] leading-snug">
-            “Tight timing, a dark low end, choruses that open into bright air. The pictures should do the same.”
-          </blockquote>
-          <p className="max-w-[48ch] text-slate">
-            Each image comes with the brief behind it and the measurements it answers to, so you can see why the
-            picture looks the way it does. Lyra describes how a performance feels. It does not judge whether a
-            person or a machine made it.
-          </p>
-        </section>
       </main>
 
       <footer className="mx-auto mt-32 max-w-[1280px] px-5 md:px-10">
