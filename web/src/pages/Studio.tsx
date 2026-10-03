@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, type Generation, type GenerateBody, type Mode, type TrackDetail } from "../lib/api";
 import { useMeta, useTrack } from "../lib/hooks";
@@ -47,6 +47,42 @@ function Title({ t }: { t: TrackDetail }) {
     >
       {t.title}
     </h1>
+  );
+}
+
+function DeleteTrack({ t }: { t: TrackDetail }) {
+  const [arm, setArm] = useState(false);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const go = async () => {
+    try {
+      await api.deleteTrack(t.id);
+      qc.removeQueries({ queryKey: ["track", t.id] });
+      qc.invalidateQueries({ queryKey: ["tracks"] });
+      qc.invalidateQueries({ queryKey: ["gallery"] });
+      toast("Song and its images deleted");
+      navigate("/library");
+    } catch (e) {
+      toast((e as Error).message, "error");
+    }
+  };
+  if (!arm)
+    return (
+      <button className="text-sm text-slate hover:text-alarm" onClick={() => setArm(true)}>
+        Delete song
+      </button>
+    );
+  return (
+    <span className="flex items-center gap-3 text-sm">
+      <span className="text-slate">Delete this song and all {t.generations.length} images?</span>
+      <button className="font-medium text-alarm" onClick={go}>
+        Delete
+      </button>
+      <button className="text-slate" onClick={() => setArm(false)}>
+        Keep
+      </button>
+    </span>
   );
 }
 
@@ -238,9 +274,12 @@ export default function Studio() {
 
   return (
     <main style={style} className="mx-auto max-w-[1440px] px-5 pb-28 pt-8 md:px-8">
-      <Link to="/library" className="text-sm text-slate hover:text-graphite">
-        Library
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link to="/library" className="text-sm text-slate hover:text-graphite">
+          Library
+        </Link>
+        <DeleteTrack t={t} />
+      </div>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-10 gap-y-3">
         <div className="w-full min-w-0 md:w-auto md:flex-1">
           <Title t={t} />

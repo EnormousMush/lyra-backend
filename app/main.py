@@ -10,7 +10,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI  # noqa: E402
+from fastapi import FastAPI, Request  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
 from . import config, jobs  # noqa: E402
@@ -43,3 +45,16 @@ app.add_middleware(
 )
 for r in (auth_router, tracks_router, gen_router, system_router):
     app.include_router(r)
+
+# In production the built web app (web/dist) is served by this same process, so the
+# session cookie is first-party and no CORS is involved. Any unknown path returns
+# index.html so client-side routes work on refresh.
+if config.STATIC_DIR.exists():
+    app.mount("/assets", StaticFiles(directory=config.STATIC_DIR / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    async def spa(path: str, request: Request):
+        candidate = config.STATIC_DIR / path
+        if path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(config.STATIC_DIR / "index.html")

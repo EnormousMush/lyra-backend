@@ -22,6 +22,17 @@ class User(SQLModel, table=True):
     email: str = Field(index=True, unique=True)
     name: str
     password_hash: str
+    is_admin: bool = False
+    created_at: datetime = Field(default_factory=now)
+
+
+class Invite(SQLModel, table=True):
+    code: str = Field(primary_key=True)
+    created_by: str = Field(foreign_key="user.id")
+    note: Optional[str] = None
+    used_by: Optional[str] = Field(default=None, foreign_key="user.id")
+    used_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=now)
 
 
@@ -81,6 +92,12 @@ engine = create_engine(
 
 def init_db() -> None:
     SQLModel.metadata.create_all(engine)
+    # Columns added after the first release; SQLite needs them appended by hand.
+    from sqlalchemy import inspect, text
+    cols = {c["name"] for c in inspect(engine).get_columns("user")}
+    if "is_admin" not in cols:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE user ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"))
 
 
 def get_session():

@@ -88,3 +88,21 @@ web/                 React + Vite + Tailwind front end
 scripts/             prompt table and atlas builders
 storage/             local database, uploads and renders (gitignored)
 ```
+
+## Hosting with invitations (Render)
+
+`render.yaml` describes one web service that runs the API, serves the built web app, and
+keeps the database, uploads and renders on a 5 GB persistent disk.
+
+1. Push this branch to GitHub.
+2. In Render choose New, then Blueprint, and pick the repo. Render reads `render.yaml`.
+3. Fill in the three secret variables it asks for: `LYRA_ADMIN_EMAIL` (your email),
+   `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`.
+4. When the first deploy finishes, open the site and create your account with that email.
+   It becomes the admin account, and it is the only one that can sign up without a code.
+5. Settings now has an Invites section. Each code lets one person create an account and
+   expires after 30 days. Daily allowances per user come from `LYRA_DAILY_UPLOADS` and
+   `LYRA_DAILY_IMAGES` (admins have no limit).
+
+Suspend or delete the old v2 service (`lyra-backend-4i26`): it is public, has no login,
+and runs on your API keys.

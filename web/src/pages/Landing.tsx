@@ -132,8 +132,11 @@ export default function Landing() {
       </main>
 
       <footer className="mx-auto mt-32 max-w-[1280px] px-5 md:px-10">
-        <p className="border-t border-rule py-10 text-sm text-slate">
-          Lyra Studio is built by Runbao Du. 
+        <p className="flex flex-wrap gap-x-6 border-t border-rule py-10 text-sm text-slate">
+          <span>Lyra Studio is built by Runbao Du.</span>
+          <Link to="/terms" className="hover:text-graphite">
+            Terms
+          </Link>
         </p>
       </footer>
     </div>

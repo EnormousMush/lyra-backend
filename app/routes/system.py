@@ -1,10 +1,11 @@
 """Health, configuration status, catalog metadata, and the Suno atlas."""
 from fastapi import APIRouter, Depends
+from sqlmodel import Session
 
-from .. import atlas, config
+from .. import atlas, config, quota
 from ..analysis.catalog import CATALOG, GROUP_ORDER
 from ..auth import current_user
-from ..db import User
+from ..db import User, get_session
 from ..director import STYLES
 from ..images import ASPECTS
 
@@ -44,3 +45,8 @@ def get_atlas(_: User = Depends(current_user)):
 def reload_atlas(_: User = Depends(current_user)):
     atlas.reload()
     return atlas.status()
+
+
+@router.get("/usage")
+def get_usage(user: User = Depends(current_user), s: Session = Depends(get_session)):
+    return quota.usage(s, user)

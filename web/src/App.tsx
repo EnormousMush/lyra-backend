@@ -9,6 +9,7 @@ import Gallery from "./pages/Gallery";
 import Atlas from "./pages/Atlas";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Terms from "./pages/Terms";
 
 function RequireAuth() {
   const me = useMe();
@@ -29,6 +30,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/terms" element={<Terms />} />
       <Route element={<GuestOnly />}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

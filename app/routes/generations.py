@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from .. import jobs
+from .. import jobs, quota
 from ..auth import current_user
 from ..db import Generation, Track, User, get_session
 from ..director import STYLES
@@ -41,6 +41,9 @@ async def generate(track_id: str, body: GenerateIn, user: User = Depends(current
     if body.aspect not in ASPECTS:
         raise HTTPException(400, "Unknown aspect ratio")
 
+    n_requested = (len(body.sections) if body.mode == "scenes" and body.sections
+                   else len(t.sections or []) if body.mode == "scenes" else body.count)
+    quota.check_images(s, user, n_requested)
     batch = uuid.uuid4().hex[:12]
     direction = (body.direction or "").strip() or None
     rows: list[Generation] = []

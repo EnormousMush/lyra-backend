@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useMe, useMeta } from "../lib/hooks";
 import { useToast } from "../components/Toast";
@@ -31,6 +31,85 @@ function Service({ name, live, model, keyPresent, envName }: { name: string; liv
               : `Preview mode. Add ${envName} to the .env file next to the backend and restart it.`}
         </p>
       </div>
+    </div>
+  );
+}
+
+function Usage() {
+  const q = useQuery({ queryKey: ["usage"], queryFn: api.usage });
+  const u = q.data;
+  if (!u) return null;
+  const row = (label: string, x: { used: number; limit: number | null }) => (
+    <div className="flex items-baseline justify-between border-b border-rule/70 py-2 text-sm">
+      <span className="text-slate">{label}</span>
+      <span className="num font-medium">
+        {x.used}
+        {x.limit != null ? ` of ${x.limit}` : ""}
+        {x.limit == null && <span className="ml-2 text-xs font-normal text-slate">no limit</span>}
+      </span>
+    </div>
+  );
+  return (
+    <div>
+      {row("Songs uploaded today", u.uploads)}
+      {row("Images painted today", u.images)}
+      <p className="mt-3 text-xs text-slate">Limits reset at {new Date(u.resets_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.</p>
+    </div>
+  );
+}
+
+function Invites() {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ["invites"], queryFn: api.invites });
+  const [note, setNote] = useState("");
+  const make = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      const inv = await api.createInvite(note);
+      setNote("");
+      qc.invalidateQueries({ queryKey: ["invites"] });
+      await navigator.clipboard?.writeText(inv.code).catch(() => undefined);
+      toast(`Invite ${inv.code} created and copied`);
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  };
+  const revoke = async (code: string) => {
+    try {
+      await api.revokeInvite(code);
+      qc.invalidateQueries({ queryKey: ["invites"] });
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  };
+  return (
+    <div>
+      <form onSubmit={make} className="flex gap-3">
+        <input className="field" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Who is this for? (optional)" aria-label="Invite note" />
+        <button className="btn btn-primary h-11 shrink-0">Create invite</button>
+      </form>
+      <ul className="mt-5 divide-y divide-rule/70">
+        {(q.data ?? []).map((i) => (
+          <li key={i.code} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5 text-sm">
+            <code className="num rounded bg-paper px-2 py-0.5 font-medium tracking-wider">{i.code}</code>
+            <span className="min-w-0 flex-1 truncate text-slate">{i.note}</span>
+            {i.used_by ? (
+              <span className="text-xs text-moss">used by {i.used_by}</span>
+            ) : (
+              <>
+                <span className="text-xs text-slate">
+                  {i.expires_at ? `expires ${new Date(i.expires_at).toLocaleDateString()}` : "no expiry"}
+                </span>
+                <button className="text-xs text-slate underline underline-offset-4 hover:text-alarm" onClick={() => revoke(i.code)}>
+                  Revoke
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+        {q.isSuccess && q.data.length === 0 && <li className="py-2 text-sm text-slate">No invites yet.</li>}
+      </ul>
     </div>
   );
 }
@@ -106,6 +185,14 @@ export default function Settings() {
             </p>
           )}
         </Block>
+        <Block title="Usage" sub="Your allowance for today.">
+          <Usage />
+        </Block>
+        {me.data?.is_admin && (
+          <Block title="Invites" sub="Each code lets one person create an account. Codes expire after 30 days.">
+            <Invites />
+          </Block>
+        )}
         <Block title="About">
           <p className="text-sm text-slate">Lyra Studio {meta.data?.version}. Runs entirely on this computer, apart from calls to the AI services above.</p>
         </Block>

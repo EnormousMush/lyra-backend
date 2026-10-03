@@ -19,6 +19,20 @@ IMAGE_MODEL = os.environ.get("LYRA_IMAGE_MODEL", "gemini-3.1-flash-image")
 FRONTEND_ORIGIN = os.environ.get("LYRA_FRONTEND_ORIGIN", "http://localhost:5173")
 SESSION_DAYS = 30
 
+
+def _flag(name: str, default: bool = False) -> bool:
+    v = os.environ.get(name, "").strip().lower()
+    return default if v == "" else v in {"1", "true", "yes", "on"}
+
+
+# Hosting controls. Locally everything is open; on a server set these in the environment.
+INVITE_ONLY = _flag("LYRA_INVITE_ONLY", False)        # sign-up needs an invite code
+SECURE_COOKIES = _flag("LYRA_SECURE_COOKIES", False)  # set on HTTPS hosts
+ADMIN_EMAIL = os.environ.get("LYRA_ADMIN_EMAIL", "").strip().lower()  # this account is admin
+DAILY_UPLOADS = int(os.environ.get("LYRA_DAILY_UPLOADS", "5"))
+DAILY_IMAGES = int(os.environ.get("LYRA_DAILY_IMAGES", "20"))
+STATIC_DIR = ROOT / "web" / "dist"  # built web app, served by the API when present
+
 _mock_flag = os.environ.get("LYRA_MOCK", "").strip().lower()
 
 

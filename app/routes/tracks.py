@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
-from .. import atlas, jobs
+from .. import atlas, jobs, quota
 from ..analysis.catalog import readout
 from ..auth import current_user
 from ..config import AUDIO_DIR
@@ -64,6 +64,7 @@ async def upload(file: UploadFile = File(...), user: User = Depends(current_user
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in ALLOWED:
         raise HTTPException(400, f"Unsupported format {suffix or '(none)'}. Use {', '.join(sorted(ALLOWED))}.")
+    quota.check_upload(s, user)
     data = await file.read()
     if len(data) > MAX_BYTES:
         raise HTTPException(413, "File is larger than 80 MB.")
@@ -138,3 +139,19 @@ async def reanalyze(track_id: str, user: User = Depends(current_user), s: Sessio
 def audio(track_id: str, user: User = Depends(current_user), s: Session = Depends(get_session)):
     t = _own(s, track_id, user)
     return FileResponse(t.audio_path, filename=t.filename)
+
+
+@router.delete("/{track_id}")
+def delete_track(track_id: str, user: User = Depends(current_user), s: Session = Depends(get_session)):
+    """Remove a song, its analysis and every image made from it, including the files on disk."""
+    t = _own(s, track_id, user)
+    gens = s.exec(select(Generation).where(Generation.track_id == t.id)).all()
+    for g in gens:
+        if g.image_path:
+            Path(g.image_path).unlink(missing_ok=True)
+        s.delete(g)
+    if t.audio_path:
+        Path(t.audio_path).unlink(missing_ok=True)
+    s.delete(t)
+    s.commit()
+    return {"ok": True}

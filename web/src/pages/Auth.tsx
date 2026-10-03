@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { Wordmark } from "../components/Shell";
 
@@ -22,7 +22,14 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
   );
 }
 
-function Field(props: { label: string; type?: string; value: string; onChange: (v: string) => void; autoComplete?: string }) {
+function Field(props: {
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+  autoComplete?: string;
+  placeholder?: string;
+}) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium">{props.label}</span>
@@ -31,6 +38,7 @@ function Field(props: { label: string; type?: string; value: string; onChange: (
         type={props.type || "text"}
         value={props.value}
         autoComplete={props.autoComplete}
+        placeholder={props.placeholder}
         onChange={(e) => props.onChange(e.target.value)}
         required
       />
@@ -90,15 +98,17 @@ export function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const policy = useQuery({ queryKey: ["policy"], queryFn: api.policy, staleTime: 300_000 });
   const finish = useFinish();
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      finish(await api.signup(name, email, password));
+      finish(await api.signup(name, email, password, invite.trim() || undefined));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -112,6 +122,16 @@ export function Signup() {
         <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
         <Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="new-password" />
         <p className="text-xs text-slate">At least 8 characters.</p>
+        {policy.data?.invite_only && (
+          <Field label="Invite code" value={invite} onChange={setInvite} placeholder="8 characters" autoComplete="off" />
+        )}
+        <p className="text-xs text-slate">
+          By creating an account you agree to the{" "}
+          <Link to="/terms" className="underline underline-offset-4">
+            terms
+          </Link>
+          .
+        </p>
         {error && <p className="text-sm text-alarm" role="alert">{error}</p>}
         <button className="btn btn-primary h-11 w-full" disabled={busy}>
           {busy ? "Creating account" : "Create account"}

@@ -1,0 +1,39 @@
+# Render blueprint for Lyra Studio. One web service runs the API and serves the built
+# web app; a persistent disk holds the SQLite database, uploads and renders.
+# Deploy: push this repo to GitHub, then in Render choose "New > Blueprint" and pick it.
+services:
+  - type: web
+    name: lyra-studio
+    runtime: python
+    plan: starter            # 512 MB RAM is enough for one analysis at a time
+    region: oregon
+    buildCommand: |
+      pip install -r requirements.txt
+      cd web && npm ci && npm run build
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    healthCheckPath: /api/health
+    disk:
+      name: lyra-data
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.12
+      - key: NODE_VERSION
+        value: "22"
+      - key: LYRA_DATA_DIR
+        value: /var/data
+      - key: LYRA_INVITE_ONLY
+        value: "1"
+      - key: LYRA_SECURE_COOKIES
+        value: "1"
+      - key: LYRA_DAILY_UPLOADS
+        value: "5"
+      - key: LYRA_DAILY_IMAGES
+        value: "20"
+      - key: LYRA_ADMIN_EMAIL
+        sync: false         # your email; that account becomes admin and needs no invite
+      - key: ANTHROPIC_API_KEY
+        sync: false         # paste in the Render dashboard, never commit
+      - key: GEMINI_API_KEY
+        sync: false

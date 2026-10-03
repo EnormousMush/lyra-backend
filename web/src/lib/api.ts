@@ -33,7 +33,29 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  is_admin: boolean;
   created_at: string;
+}
+
+export interface Policy {
+  invite_only: boolean;
+  daily_uploads: number;
+  daily_images: number;
+}
+
+export interface Usage {
+  uploads: { used: number; limit: number | null };
+  images: { used: number; limit: number | null };
+  resets_at: string;
+}
+
+export interface Invite {
+  code: string;
+  note: string | null;
+  created_at: string;
+  expires_at: string | null;
+  used_by: string | null;
+  used_at: string | null;
 }
 
 export interface CatalogEntry {
@@ -200,8 +222,14 @@ export interface AtlasPayload {
 export const api = {
   me: () => request<User>("/api/auth/me"),
   login: (email: string, password: string) => request<User>("/api/auth/login", json("POST", { email, password })),
-  signup: (name: string, email: string, password: string) =>
-    request<User>("/api/auth/signup", json("POST", { name, email, password })),
+  signup: (name: string, email: string, password: string, invite?: string) =>
+    request<User>("/api/auth/signup", json("POST", { name, email, password, invite })),
+  policy: () => request<Policy>("/api/auth/policy"),
+  usage: () => request<Usage>("/api/usage"),
+  invites: () => request<Invite[]>("/api/auth/invites"),
+  createInvite: (note: string) => request<Invite>("/api/auth/invites", json("POST", { note, days: 30 })),
+  revokeInvite: (code: string) => request<{ ok: boolean }>(`/api/auth/invites/${code}`, { method: "DELETE" }),
+  deleteTrack: (id: string) => request<{ ok: boolean }>(`/api/tracks/${id}`, { method: "DELETE" }),
   logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
   updateMe: (name: string) => request<User>("/api/auth/me", json("PATCH", { name })),
   changePassword: (current: string, next: string) =>
