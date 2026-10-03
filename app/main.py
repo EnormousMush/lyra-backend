@@ -1,6 +1,6 @@
 """Lyra Studio backend (v3): turn a song into images, grounded in measured audio features.
 
-Run:  uvicorn app.main:app --reload --port 8000
+Run:  ./dev.sh  (API on :8765, see LYRA_API_PORT)
 The Vite dev server in web/ proxies /api to this process, so cookies stay same-origin.
 """
 import logging

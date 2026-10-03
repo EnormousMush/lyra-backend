@@ -11,7 +11,7 @@ This is v3. The v2 chat version is preserved unchanged on the `main` branch.
 
 ```bash
 cp .env.example .env      # add ANTHROPIC_API_KEY and GEMINI_API_KEY
-./dev.sh                  # API on :8000, web app on http://localhost:5173
+./dev.sh                  # API on :8765, web app on http://localhost:5173 (or the next free port)
 ```
 
 `dev.sh` creates `.venv`, installs Python and Node dependencies on first run, and starts
