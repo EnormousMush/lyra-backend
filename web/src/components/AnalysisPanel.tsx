@@ -7,7 +7,11 @@ type Tab = "listening" | "dna" | "measure";
 
 function Listening({ t }: { t: TrackDetail }) {
   const l = t.listening;
-  const label = (key: string) => t.readout.find((r) => r.key === key)?.label ?? key;
+  const label = (key: string) => {
+    const bare = key.replace(/^stats\./, "");
+    const hit = t.readout.find((r) => r.key === key || r.key === bare || r.key === `stats.${bare}`);
+    return hit?.label ?? bare.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+  };
   if (!l) return <p className="text-slate">The visual identity appears when analysis finishes.</p>;
   return (
     <div>
