@@ -33,7 +33,6 @@ export default function Gallery() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="display text-5xl">Gallery</h1>
-          <p className="mt-2 text-slate">Every image you have painted, newest first.</p>
         </div>
         <div className="flex gap-1.5">
           <button className="chip" aria-pressed={!favs} onClick={() => setFavs(false)}>

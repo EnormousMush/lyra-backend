@@ -42,7 +42,7 @@ function Signature({ data, factor, value }: { data: AtlasPayload; factor: Factor
   return (
     <div className="max-w-2xl">
       <p className="text-sm text-slate">
-        How {prof.n.toLocaleString()} songs prompted with “{value}” differ from the rest of the corpus. Bars are
+        How songs prompted with “{value}” differ from the rest of the corpus. Bars are
         standardized mean differences (Cohen’s d); right means higher than the rest.
       </p>
       <ul className="mt-6 space-y-1.5">
@@ -127,17 +127,11 @@ export default function Atlas() {
   const data = q.data;
   const list = useMemo(() => data?.vocabulary[factor] ?? [], [data, factor]);
   const current = value && list.some((x) => x.value === value) ? value : list[0]?.value;
-  const maxSongs = Math.max(1, ...list.map((x) => x.songs));
   const ready = !!data?.profiles;
 
   return (
     <main className="mx-auto max-w-[1440px] px-5 pb-24 pt-10 md:px-8">
       <h1 className="display text-5xl">Prompt atlas</h1>
-      <p className="mt-3 max-w-[70ch] text-slate">
-        The {data?.vocabulary.totals.prompts.toLocaleString() ?? "10,750"} prompts behind{" "}
-        {data?.vocabulary.totals.songs.toLocaleString() ?? "21,500"} Suno songs in the humanness study. Every prompt
-        uses the same template, so each word is a controlled variable. Choose a slot to explore its words.
-      </p>
       <div className="mt-10">
         <Template
           factor={factor}
@@ -170,18 +164,11 @@ export default function Atlas() {
                 role="option"
                 aria-selected={current === x.value}
                 onClick={() => setValue(x.value)}
-                className={`grid w-full grid-cols-[1fr_5rem_3.5rem] items-center gap-3 rounded-lg px-3 py-2 text-left text-sm ${
+                className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
                   current === x.value ? "bg-graphite text-paper" : "hover:bg-paper"
                 }`}
               >
-                <span className="truncate">{x.value}</span>
-                <span className="h-1 overflow-hidden rounded-full bg-rule/60">
-                  <span
-                    className="block h-full rounded-full"
-                    style={{ width: `${(x.songs / maxSongs) * 100}%`, background: current === x.value ? "#e4e6e3" : "#5e646b" }}
-                  />
-                </span>
-                <span className="num text-right text-xs opacity-75">{x.songs.toLocaleString()}</span>
+                <span className="block truncate">{x.value}</span>
               </button>
             </li>
           ))}
@@ -189,12 +176,6 @@ export default function Atlas() {
         {data && current && (
           <section>
             <h2 className="display text-4xl">{current}</h2>
-            <p className="num mt-1 text-sm text-slate">
-              {list.find((x) => x.value === current)?.songs.toLocaleString()} songs in the study
-              {ready && data.profiles!.profiles[factor]?.[current]
-                ? `, ${data.profiles!.profiles[factor][current].n.toLocaleString()} with measured features`
-                : ""}
-            </p>
             <div className="mt-8">
               {ready ? (
                 <Signature data={data} factor={factor} value={current} />

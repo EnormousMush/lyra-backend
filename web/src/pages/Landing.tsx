@@ -107,10 +107,6 @@ export default function Landing() {
           <h1 className="display max-w-[14ch] text-[clamp(2.9rem,7.4vw,6.4rem)] font-normal">
             Lyra Studio: an audio-to-image generator.
           </h1>
-          <p className="mt-8 max-w-[56ch] text-lg text-slate">
-            Lyra measures a track the way a research lab does, then directs an image model to paint what those
-            numbers describe. Covers, a scene for every section, and variations you can steer.
-          </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <Link to={signedIn ? "/library" : "/signup"} className="btn btn-primary h-12 px-6 text-[0.95rem]">
               {signedIn ? "Open library" : "Create account"}
