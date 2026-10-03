@@ -2,34 +2,29 @@ import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useMe } from "../lib/hooks";
 import { Wordmark } from "../components/Shell";
-import PaletteArt from "../components/PaletteArt";
+import LogoArt, { type LogoStyle } from "../components/LogoArt";
 import DragField, { type Card } from "../components/DragField";
 
-/* Cards that orbit the headline. Drag them anywhere; they glide when let go. */
-const PALETTES = [
-  ["#14223a", "#2c4a6e", "#6b8fb3", "#d9c7a8", "#f1e6d2"],
-  ["#2b1d3a", "#7a3f6e", "#e07a5f", "#f2c46b", "#fff1d6"],
-  ["#0f1a2c", "#22344f", "#4c6a8c", "#b9b0a0", "#e6ddcc"],
-  ["#1d2b3a", "#3e5c76", "#8aa7b5", "#e3c38f", "#f6ead6"],
-  ["#2b1d3a", "#8c3f5e", "#ef8a5f", "#f7d27a", "#fff4dc"],
-  ["#101c17", "#2a4a3a", "#6f9a7c", "#d8c99a", "#f0ead8"],
+/* Cards that orbit the headline: the Lyra mark in each of the studio's image styles.
+   Drag them anywhere; they glide when let go. */
+const LAYOUT: Array<Omit<Card, "node"> & { style: LogoStyle }> = [
+  { style: "cinematic", x: 64, y: 3, r: -7, w: 180, delay: 300, ratio: "3 / 4" },
+  { style: "analog", x: 84, y: 26, r: 5, w: 200, delay: 450, ratio: "4 / 3" },
+  { style: "painterly", x: 55, y: 44, r: 3, w: 140, delay: 600, ratio: "1 / 1" },
+  { style: "watercolor", x: 74, y: 60, r: -4, w: 190, delay: 750, ratio: "3 / 4" },
+  { style: "ink", x: 3, y: 88, r: 6, w: 150, delay: 900, ratio: "4 / 5" },
+  { style: "abstract", x: 24, y: 80, r: -3, w: 140, delay: 1050, ratio: "1 / 1" },
+  { style: "graphic", x: 90, y: 2, r: 8, w: 120, delay: 1200, ratio: "1 / 1" },
+  { style: "dreamscape", x: 44, y: 62, r: -6, w: 160, delay: 1350, ratio: "4 / 5" },
 ];
-const LAYOUT = [
-  { x: 66, y: 4, r: -7, w: 190, delay: 300, energy: 0.3, ratio: "3 / 4" },
-  { x: 84, y: 30, r: 5, w: 230, delay: 450, energy: 0.9, ratio: "4 / 3" },
-  { x: 58, y: 48, r: 3, w: 150, delay: 600, energy: 0.6, ratio: "1 / 1" },
-  { x: 76, y: 66, r: -4, w: 210, delay: 750, energy: 1, ratio: "3 / 4" },
-  { x: 4, y: 70, r: 6, w: 170, delay: 900, energy: 0.15, ratio: "4 / 5" },
-  { x: 30, y: 84, r: -3, w: 140, delay: 1050, energy: 0.5, ratio: "1 / 1" },
-];
-const CARDS: Card[] = LAYOUT.map((c, i) => ({
+const CARDS: Card[] = LAYOUT.map((c) => ({
   ...c,
   node: (
     <div
       className="overflow-hidden rounded-[6px] shadow-[0_30px_60px_-20px_rgba(0,0,0,0.8)]"
       style={{ width: c.w, aspectRatio: c.ratio }}
     >
-      <PaletteArt palette={PALETTES[i]} seed={i * 131 + 7} energy={c.energy} className="h-full w-full" />
+      <LogoArt style={c.style} className="h-full w-full" />
     </div>
   ),
 }));
