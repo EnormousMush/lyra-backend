@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { TrackDetail } from "../lib/api";
 import { fmtNum } from "../lib/format";
+import { useMeta } from "../lib/hooks";
 
 type Tab = "listening" | "dna" | "measure";
 
@@ -63,7 +64,15 @@ function Dna({ t }: { t: TrackDetail }) {
       <dl className="mt-7 space-y-5">
         {(Object.keys(FACTOR_LABEL) as (keyof typeof FACTOR_LABEL)[]).map((f) => (
           <div key={f}>
-            <dt className="text-xs text-slate">{FACTOR_LABEL[f]}</dt>
+            <dt className="flex items-baseline justify-between gap-3 text-xs text-slate">
+              <span>{FACTOR_LABEL[f]}</span>
+              {d.source === "data" && d.reliability?.[f] && (
+                <span className="num text-[0.7rem] text-mist">
+                  correct {Math.round(d.reliability[f].accuracy * 100)}% in tests, chance{" "}
+                  {Math.round(d.reliability[f].chance * 100)}%
+                </span>
+              )}
+            </dt>
             <dd className="mt-1.5 space-y-1.5">
               {(d.factors[f] || []).map((x, i) => (
                 <div key={x.value} className="flex items-center gap-3">
@@ -88,8 +97,9 @@ function Dna({ t }: { t: TrackDetail }) {
       {d.source === "data" ? (
         <>
           <p className="mt-7 text-xs text-slate">
-            Matched against the {d.k} nearest of 21,500 Suno songs in the research feature space. Shares are
-            distance-weighted votes.
+            Matched against the {d.k} nearest of {d.pool?.toLocaleString() ?? "the"} measured Suno songs from the research
+            corpus. Shares are distance-weighted votes. Test accuracy comes from holding each corpus song out
+            and predicting its prompt from the others.
           </p>
           {d.nearest_prompts.length > 0 && (
             <>
@@ -111,7 +121,7 @@ function Dna({ t }: { t: TrackDetail }) {
             (confidence {Math.round(d.confidence * 100)}%).
           </p>
           {d.reasoning && <p className="voice mt-2 text-sm text-graphite">{d.reasoning}</p>}
-          <p className="mt-2">Import the Suno feature table to match this song against the 21,500 real songs instead.</p>
+          <p className="mt-2">Import the Suno feature table to match this song against measured Suno songs instead.</p>
         </div>
       )}
     </div>
@@ -119,6 +129,7 @@ function Dna({ t }: { t: TrackDetail }) {
 }
 
 function Measurements({ t }: { t: TrackDetail }) {
+  const meta = useMeta();
   const [open, setOpen] = useState<string | null>(null);
   const groups = Array.from(new Set(t.readout.map((r) => r.group)));
   const hasPct = Object.keys(t.percentiles).length > 0;
@@ -171,7 +182,7 @@ function Measurements({ t }: { t: TrackDetail }) {
       ))}
       <p className="text-xs text-slate">
         {hasPct
-          ? "Markers show where this song sits among the 21,500 Suno songs."
+          ? `Markers show where this song sits among ${meta.data?.atlas.n_songs_with_features.toLocaleString() ?? "the"} measured Suno songs.`
           : "Measured on the middle 10 s and 30 s of the song and on the full track, with the same settings as the research dataset."}
         {g_note}
       </p>

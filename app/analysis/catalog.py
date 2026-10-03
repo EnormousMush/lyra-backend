@@ -36,8 +36,6 @@ CATALOG = {
     # ---------------- tone & space ----------------
     "stats.centroid_mean_hz": dict(label="Brightness", unit="Hz", group="Tone", fmt=0,
                                    explain="Spectral centroid; where the energy of the sound is centred."),
-    "stats.hf_energy_ratio": dict(label="Air above 8 kHz", unit="", group="Tone", fmt=3,
-                                  explain="Share of energy above 8 kHz."),
     "stats.bandwidth_mean_hz": dict(label="Spectral width", unit="Hz", group="Tone", fmt=0,
                                     explain="How spread the spectrum is around its centre."),
     "stats.spec_flat_mean": dict(label="Noisiness", unit="", group="Tone", fmt=3,
@@ -75,10 +73,12 @@ CATALOG = {
 GROUP_ORDER = ["Rhythm", "Performance", "Tone", "Dynamics", "Harmony"]
 
 # Features used for the Suno kNN index and atlas profiles (must exist in the h1 CSV).
+# stats.hf_energy_ratio is left out: the research spec is 16 kHz audio, so there is no
+# energy above 8 kHz and the value is always 0.
 INDEX_FEATURES = [
     "stats.tempo_bpm", "stats.onset_density_per_s", "stats.syncopation_index",
     "stats.beat_regularity", "stats.tempo_stability", "quantization_score", "mean_dev_ms",
-    "swing_pct", "stats.centroid_mean_hz", "stats.hf_energy_ratio", "stats.bandwidth_mean_hz",
+    "swing_pct", "stats.centroid_mean_hz", "stats.bandwidth_mean_hz",
     "stats.spec_flat_mean", "stats.harm_perc_ratio", "stats.mfcc_delta_mean_abs",
     "stats.rms_std_db", "stats.dynamic_range_db", "stats.crest_mean",
     "stats.chord_change_rate_hz", "stats.chroma_entropy_mean", "stats.zcr_mean",

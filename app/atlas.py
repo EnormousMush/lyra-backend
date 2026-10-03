@@ -116,7 +116,7 @@ def data_dna(flat: dict, k: int = 60) -> dict | None:
     w = 1.0 / (d[nn] + 0.25)
     rows = prompt_rows()
     job_of = idx["job_row"][nn]
-    out = {"source": "data", "k": int(k), "features_used": int(present.sum()), "factors": {}}
+    out = {"source": "data", "k": int(k), "pool": int(len(X)), "features_used": int(present.sum()), "factors": {}}
     for fac in FACTORS:
         tally = Counter()
         for row_i, wi in zip(job_of, w):
@@ -145,6 +145,8 @@ def data_dna(flat: dict, k: int = 60) -> dict | None:
                 tally[r[fac]] += float(wi)
         pick[fac] = tally.most_common(1)[0][0]
     out["prompt"] = compose_prompt(g_top, pick["subgenre"], pick["mood"], pick["descriptor"])
+    prof = _profiles()
+    out["reliability"] = (prof or {}).get("meta", {}).get("reliability", {})
     out["prompt_parts"] = {"genre": g_top, **pick}
     out["confidence"] = round(float(np.mean([out["factors"][f][0]["share"] for f in FACTORS])), 3)
     return out

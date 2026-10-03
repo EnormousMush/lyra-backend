@@ -112,6 +112,8 @@ export interface Dna {
   reasoning?: string;
   nearest_prompts: { prompt: string; genre: string; distance: number }[];
   k?: number;
+  pool?: number;
+  reliability?: Record<string, { accuracy: number; chance: number; classes: number }>;
 }
 
 export interface Listening {

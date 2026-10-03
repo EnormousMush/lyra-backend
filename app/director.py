@@ -119,7 +119,8 @@ LISTEN_SYSTEM = (
     "track. You receive measurements from a research-grade audio feature pipeline and must translate "
     "them into a visual identity. Ground every claim in the numbers you are given and never invent "
     "measurements (instruments, lyrics, vocals, era) that the numbers do not support. Percentiles, "
-    "when present, compare the track with 21,500 Suno songs. The performance-texture measures "
+    "when present, compare the track with the Suno songs from the research corpus that have measured "
+    "features. The performance-texture measures "
     "(timing and pitch grid lock, tempo breathing) describe the feel of a performance; do not use "
     "them to claim whether a track was made by a person or by AI."
 )

@@ -65,11 +65,11 @@ function HeroStrip() {
 const STEPS = [
   {
     title: "Measure",
-    body: "Upload a song. Lyra runs the feature pipeline from a study of 21,500 Suno songs: timing against the beat grid, pitch against equal temperament, brightness, dynamics and section structure.",
+    body: "Upload a song. Lyra runs the feature pipeline from a research study of AI-generated music: timing against the beat grid, pitch against equal temperament, brightness, dynamics and section structure.",
   },
   {
     title: "Decode",
-    body: "Prompt DNA places the song among those 21,500 prompts and names the genre, mood and instrumentation words that describe it best.",
+    body: "Prompt DNA compares the song with thousands of measured Suno songs and their prompts, and names the genre, mood and instrumentation words that describe it best.",
   },
   {
     title: "Direct",

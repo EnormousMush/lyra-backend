@@ -190,7 +190,10 @@ export default function Atlas() {
           <section>
             <h2 className="display text-4xl">{current}</h2>
             <p className="num mt-1 text-sm text-slate">
-              {list.find((x) => x.value === current)?.songs.toLocaleString()} songs
+              {list.find((x) => x.value === current)?.songs.toLocaleString()} songs in the study
+              {ready && data.profiles!.profiles[factor]?.[current]
+                ? `, ${data.profiles!.profiles[factor][current].n.toLocaleString()} with measured features`
+                : ""}
             </p>
             <div className="mt-8">
               {ready ? (

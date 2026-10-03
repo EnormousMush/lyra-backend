@@ -78,11 +78,12 @@ def main():
     print(f"{len(rows)} Suno songs matched; {len(keys)} catalogued features; "
           f"{len(idx_keys)} index features" + (f" (missing: {missing})" if missing else ""))
 
-    V = {k: np.array([_num(r.get(k)) for r in rows]) for k in keys}
+    V = {k: np.array([_num(r.get(k)) for r in rows]) for k in dict.fromkeys(keys + idx_keys)}
     jobs = np.array([r["_job"] for r in rows])
 
     quantiles, glob = {}, {}
-    for k, v in V.items():
+    for k in keys:
+        v = V[k]
         f = v[np.isfinite(v)]
         if len(f) < 50:
             continue
@@ -111,6 +112,7 @@ def main():
             prof[val] = entry
         profiles[fac] = prof
 
+    idx_keys = [k for k in idx_keys if np.nanstd(V[k]) > 1e-12]  # drop constant columns
     X = np.column_stack([V[k] for k in idx_keys])
     center = np.nanmedian(X, axis=0)
     iqr = np.nanpercentile(X, 75, axis=0) - np.nanpercentile(X, 25, axis=0)
@@ -119,13 +121,34 @@ def main():
     keep = np.isfinite(Xs).all(axis=1)
     print(f"kNN index: {keep.sum()} complete rows of {len(Xs)}")
 
+    # Leave-one-out reliability of Prompt DNA, per factor. The sibling clip of the same
+    # Suno job (_1/_2) is excluded too, so a song is never matched to its own prompt.
+    Xk, jk = Xs[keep], jobs[keep]
+    D = np.sqrt(((Xk[:, None, :] - Xk[None, :, :]) ** 2).mean(axis=-1))
+    reliability = {}
+    for fac in FACTORS:
+        lab = np.array([prompts[j][fac] for j in jk])
+        hits = 0
+        for i in range(len(Xk)):
+            d = D[i].copy()
+            d[jk == jk[i]] = np.inf
+            nn = np.argsort(d)[:60]
+            votes = {}
+            for j, wi in zip(nn, 1.0 / (d[nn] + 0.25)):
+                votes[lab[j]] = votes.get(lab[j], 0.0) + wi
+            hits += max(votes, key=votes.get) == lab[i]
+        _, counts = np.unique(lab, return_counts=True)
+        reliability[fac] = {"accuracy": round(hits / len(Xk), 3), "chance": round(counts.max() / len(Xk), 3),
+                            "classes": int(len(counts))}
+        print(f"  DNA {fac}: top-1 {reliability[fac]['accuracy']:.1%} (chance {reliability[fac]['chance']:.1%})")
+
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out / "index.npz", X=Xs[keep].astype(np.float32), center=center,
                         scale=scale, features=np.array(idx_keys), job_row=jobs[keep].astype(np.int32))
     meta = {"n_songs": len(rows), "n_index": int(keep.sum()),
             "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "source": Path(args.features).name}
+            "source": Path(args.features).name, "reliability": reliability}
     feats = [{"key": k, **{m: CATALOG[k][m] for m in ("label", "unit", "group", "fmt", "explain")}}
              for k in quantiles]
     (out / "atlas.json").write_text(json.dumps(
