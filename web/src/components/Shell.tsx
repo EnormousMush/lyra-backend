@@ -4,20 +4,32 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { useMe, useMeta } from "../lib/hooks";
 
+/** The constellation Lyra: Vega (the blue star), the small triangle beside it, and the
+ *  parallelogram of the lyre's body. Astronomy and music in one mark. */
+export function LyraMark({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+      <g stroke="#202326" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" opacity="0.75">
+        <path d="M8.5 7.5 L15.5 6 L13 12.5 Z" />
+        <path d="M13 12.5 L21.5 14 L23.5 26 L15.2 24.6 Z" />
+      </g>
+      <g fill="#202326">
+        <circle cx="15.5" cy="6" r="1.8" />
+        <circle cx="13" cy="12.5" r="1.9" />
+        <circle cx="21.5" cy="14" r="1.7" />
+        <circle cx="23.5" cy="26" r="2" />
+        <circle cx="15.2" cy="24.6" r="2" />
+      </g>
+      <path d="M8.5 1 L9.7 6.3 L15 7.5 L9.7 8.7 L8.5 14 L7.3 8.7 L2 7.5 L7.3 6.3 Z" fill="#3352c4" />
+    </svg>
+  );
+}
+
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden>
-        <rect width="32" height="32" rx="7" fill="#202326" />
-        <g fill="#E4E6E3">
-          <rect x="7" y="13" width="2.6" height="6" rx="1.3" />
-          <rect x="11.6" y="9" width="2.6" height="14" rx="1.3" />
-          <rect x="16.2" y="6" width="2.6" height="20" rx="1.3" />
-          <rect x="20.8" y="11" width="2.6" height="10" rx="1.3" />
-        </g>
-        <circle cx="24.6" cy="8" r="2" fill="#7C95F0" />
-      </svg>
-      <span className="display text-[1.45rem] font-medium">Lyra</span>
+      <LyraMark />
+      <span className="display whitespace-nowrap text-[1.35rem] font-medium">Lyra Studio</span>
     </span>
   );
 }
@@ -102,17 +114,17 @@ export default function Shell() {
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-20 border-b border-rule/70 bg-wall/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-8 px-5 md:px-8">
-          <Link to="/library" aria-label="Lyra library">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:gap-8 md:px-8">
+          <Link to="/library" aria-label="Lyra Studio library">
             <Wordmark />
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-0.5 sm:gap-1">
             {nav.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 className={({ isActive }) =>
-                  `rounded-full px-3.5 py-1.5 text-sm transition-colors ${
+                  `rounded-full px-2.5 py-1.5 text-sm transition-colors sm:px-3.5 ${
                     isActive ? "bg-graphite text-paper" : "text-slate hover:text-graphite"
                   }`
                 }

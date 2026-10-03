@@ -148,7 +148,7 @@ export default function Landing() {
 
       <footer className="mx-auto mt-32 max-w-[1280px] px-5 md:px-10">
         <p className="border-t border-rule py-10 text-sm text-slate">
-          Lyra is built by Runbao Du. Audio features come from the musicdeepfake research pipeline.
+          Lyra Studio is built by Runbao Du. Audio features come from the musicdeepfake research pipeline.
         </p>
       </footer>
     </div>

@@ -8,7 +8,7 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.05fr]">
       <div className="flex flex-col px-6 py-6 sm:px-12">
-        <Link to="/" aria-label="Lyra home">
+        <Link to="/" aria-label="Lyra Studio home">
           <Wordmark />
         </Link>
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
@@ -17,7 +17,7 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
           <div className="mt-9">{children}</div>
         </div>
       </div>
-      <div className="hidden bg-black lg:block" aria-hidden />
+      <div className="hidden bg-[#2a2d31] lg:block" aria-hidden />
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function Login() {
         </button>
       </form>
       <p className="mt-6 text-sm text-slate">
-        New to Lyra?{" "}
+        New to Lyra Studio?{" "}
         <Link to="/signup" className="font-medium text-graphite underline underline-offset-4">
           Create an account
         </Link>
