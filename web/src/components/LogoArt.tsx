@@ -62,12 +62,15 @@ function Cinematic({ id }: { id: string }) {
           <stop offset="0" stopColor="#f4c98a" stopOpacity="0.55" />
           <stop offset="1" stopColor="#f4c98a" stopOpacity="0" />
         </radialGradient>
-        <filter id={`${id}soft`}><feGaussianBlur stdDeviation="0.25" /></filter>
+        <filter id={`${id}glow`} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.1" /></filter>
       </defs>
       <rect width="100" height="100" fill={`url(#${id}bg)`} />
       <rect width="100" height="100" fill={`url(#${id}fl)`} />
       <line x1="0" y1="37" x2="100" y2="31" stroke="#f4c98a" strokeWidth="0.3" opacity="0.35" />
-      <Mark stroke="#d9c7a8" dots="#fff4dc" star="#f1b45a" width={0.35} dot={0.75} filter={`url(#${id}soft)`} />
+      <g opacity="0.5" filter={`url(#${id}glow)`}>
+        <Mark stroke="#f1b45a" dots="#fff4dc" star="#f1b45a" width={0.5} dot={1.1} starR={3.6} />
+      </g>
+      <Mark stroke="#e9dcc4" dots="#fffaf0" star="#f1b45a" width={0.4} dot={0.75} />
       <rect width="100" height="9" fill="#050608" />
       <rect y="91" width="100" height="9" fill="#050608" />
     </>
