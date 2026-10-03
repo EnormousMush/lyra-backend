@@ -65,15 +65,15 @@ function HeroStrip() {
 const STEPS = [
   {
     title: "Measure",
-    body: "Upload a song. Lyra runs the feature pipeline from a research study of AI-generated music: timing against the beat grid, pitch against equal temperament, brightness, dynamics and section structure.",
+    body: "Lyra runs a series of audio-analysis through a pipeline that embodies features like timing against the beat grid, pitch against equal temperament, brightness, dynamics and section structure.",
   },
   {
     title: "Decode",
-    body: "Prompt DNA compares the song with thousands of measured Suno songs and their prompts, and names the genre, mood and instrumentation words that describe it best.",
+    body: "Lyra compares the song with songs in the Lyra database with their prompts, and find the best match.",
   },
   {
-    title: "Direct",
-    body: "Claude writes a brief for every image from the measurements. Gemini paints covers, a scene for each section, and variations you steer in plain words.",
+    title: "Produce",
+    body: "Lyra produces images like cover designs, variation scenes through out the track, and basic audio measurements of the song",
   },
 ];
 
@@ -105,7 +105,7 @@ export default function Landing() {
       <main className="mx-auto max-w-[1280px] px-5 md:px-10">
         <section className="pt-14 md:pt-24">
           <h1 className="display max-w-[14ch] text-[clamp(2.9rem,7.4vw,6.4rem)] font-normal">
-            Every song already has a picture in it.
+            Lyra Studio: an audio-to-image generator.
           </h1>
           <p className="mt-8 max-w-[56ch] text-lg text-slate">
             Lyra measures a track the way a research lab does, then directs an image model to paint what those
@@ -137,7 +137,7 @@ export default function Landing() {
 
       <footer className="mx-auto mt-32 max-w-[1280px] px-5 md:px-10">
         <p className="border-t border-rule py-10 text-sm text-slate">
-          Lyra Studio is built by Runbao Du. Audio features come from the musicdeepfake research pipeline.
+          Lyra Studio is built by Runbao Du. 
         </p>
       </footer>
     </div>
