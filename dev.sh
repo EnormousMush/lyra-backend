@@ -9,7 +9,7 @@ fi
 source .venv/bin/activate
 pip install -q -r requirements.txt
 
-if [ ! -d web/node_modules ]; then
+if [ ! -x web/node_modules/.bin/vite ]; then
   (cd web && npm install)
 fi
 
