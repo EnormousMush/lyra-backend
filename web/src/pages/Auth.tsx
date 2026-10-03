@@ -3,6 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { Wordmark } from "../components/Shell";
+import AuthArt, { type AuthArtKind } from "../components/AuthArt";
+
+/* Which artwork fills the right side: "exposure", "ribbons", "constellation" or "sheet". */
+const ART: AuthArtKind = "exposure";
 
 function Frame({ children, title, sub }: { children: React.ReactNode; title: string; sub: string }) {
   return (
@@ -17,7 +21,7 @@ function Frame({ children, title, sub }: { children: React.ReactNode; title: str
           <div className="mt-9">{children}</div>
         </div>
       </div>
-      <div className="hidden bg-[#17191d] lg:block" aria-hidden />
+      <AuthArt kind={ART} />
     </div>
   );
 }

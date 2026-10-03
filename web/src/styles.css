@@ -364,3 +364,69 @@
     display: none;
   }
 }
+
+/* ---------- sign-in artwork ---------- */
+.auth-exposure > span {
+  position: absolute;
+  width: 70%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: 0.55;
+  animation: exposure-drift 50s ease-in-out infinite alternate;
+}
+@keyframes exposure-drift {
+  from {
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    transform: translate(18%, -14%) scale(1.25);
+  }
+}
+
+.auth-ribbons > span {
+  flex: 1;
+  border-radius: 999px;
+  background: var(--color-graphite);
+  opacity: 0.22;
+  transform-origin: center;
+  animation: ribbon-breathe 6s ease-in-out infinite alternate;
+}
+@keyframes ribbon-breathe {
+  from {
+    transform: scaleY(0.88);
+  }
+  to {
+    transform: scaleY(1.06);
+  }
+}
+
+.auth-constellation > svg:last-child {
+  animation: constellation-drift 40s ease-in-out infinite alternate;
+}
+@keyframes constellation-drift {
+  from {
+    transform: translate(-50%, -50%) rotate(-2deg);
+  }
+  to {
+    transform: translate(-48%, -52%) rotate(2deg);
+  }
+}
+
+.auth-sheet > div {
+  animation: sheet-float 9s ease-in-out infinite alternate;
+}
+@keyframes sheet-float {
+  to {
+    margin-top: -10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-exposure > span,
+  .auth-ribbons > span,
+  .auth-constellation > svg:last-child,
+  .auth-sheet > div {
+    animation: none;
+  }
+}
