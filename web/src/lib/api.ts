@@ -49,6 +49,12 @@ export interface Usage {
   resets_at: string;
 }
 
+export interface Account extends User {
+  tracks: number;
+  images: number;
+  is_owner: boolean;
+}
+
 export interface Invite {
   code: string;
   note: string | null;
@@ -229,6 +235,9 @@ export const api = {
   invites: () => request<Invite[]>("/api/auth/invites"),
   createInvite: (note: string) => request<Invite>("/api/auth/invites", json("POST", { note, days: 30 })),
   revokeInvite: (code: string) => request<{ ok: boolean }>(`/api/auth/invites/${code}`, { method: "DELETE" }),
+  users: () => request<Account[]>("/api/auth/users"),
+  setAdmin: (id: string, is_admin: boolean) => request<Account>(`/api/auth/users/${id}`, json("PATCH", { is_admin })),
+  removeUser: (id: string) => request<{ ok: boolean }>(`/api/auth/users/${id}`, { method: "DELETE" }),
   deleteTrack: (id: string) => request<{ ok: boolean }>(`/api/tracks/${id}`, { method: "DELETE" }),
   logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
   updateMe: (name: string) => request<User>("/api/auth/me", json("PATCH", { name })),

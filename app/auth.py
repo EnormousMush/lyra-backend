@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import os
+from pathlib import Path
 import secrets
 from datetime import timedelta
 
@@ -13,7 +14,7 @@ from sqlmodel import Session, select
 
 from . import config
 from .config import SESSION_DAYS
-from .db import AuthSession, Invite, User, get_session, now
+from .db import AuthSession, Generation, Invite, Track, User, get_session, now
 
 COOKIE = "lyra_session"
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -251,5 +252,71 @@ def revoke_invite(code: str, admin: User = Depends(require_admin), s: Session = 
     if inv.used_by:
         raise HTTPException(409, "That invite has already been used")
     s.delete(inv)
+    s.commit()
+    return {"ok": True}
+
+
+# ---------- user management (admin only) ----------
+
+class AdminIn(BaseModel):
+    is_admin: bool
+
+
+def _user_out(u: User, s: Session) -> dict:
+    tracks = len(s.exec(select(Track.id).where(Track.user_id == u.id)).all())
+    images = len(s.exec(select(Generation.id).where(Generation.user_id == u.id,
+                                                   Generation.status == "done")).all())
+    return {**public_user(u), "tracks": tracks, "images": images,
+            "is_owner": bool(config.ADMIN_EMAIL) and u.email == config.ADMIN_EMAIL}
+
+
+@router.get("/users")
+def list_users(admin: User = Depends(require_admin), s: Session = Depends(get_session)):
+    rows = s.exec(select(User).order_by(User.created_at)).all()
+    return [_user_out(u, s) for u in rows]
+
+
+@router.patch("/users/{user_id}")
+def set_admin(user_id: str, body: AdminIn, admin: User = Depends(require_admin),
+              s: Session = Depends(get_session)):
+    u = s.get(User, user_id)
+    if u is None:
+        raise HTTPException(404, "Account not found")
+    if u.id == admin.id and not body.is_admin:
+        raise HTTPException(400, "You cannot remove your own admin access")
+    if config.ADMIN_EMAIL and u.email == config.ADMIN_EMAIL and not body.is_admin:
+        raise HTTPException(400, "The owner account set by LYRA_ADMIN_EMAIL is always an admin")
+    u.is_admin = body.is_admin
+    s.add(u)
+    s.commit()
+    return _user_out(u, s)
+
+
+@router.delete("/users/{user_id}")
+def remove_user(user_id: str, admin: User = Depends(require_admin), s: Session = Depends(get_session)):
+    """Remove an account with its sessions, songs and images, including the files on disk."""
+    u = s.get(User, user_id)
+    if u is None:
+        raise HTTPException(404, "Account not found")
+    if u.id == admin.id:
+        raise HTTPException(400, "You cannot remove the account you are signed in with")
+    if config.ADMIN_EMAIL and u.email == config.ADMIN_EMAIL:
+        raise HTTPException(400, "The owner account set by LYRA_ADMIN_EMAIL cannot be removed")
+    for g in s.exec(select(Generation).where(Generation.user_id == u.id)).all():
+        if g.image_path:
+            Path(g.image_path).unlink(missing_ok=True)
+        s.delete(g)
+    for t in s.exec(select(Track).where(Track.user_id == u.id)).all():
+        if t.audio_path:
+            Path(t.audio_path).unlink(missing_ok=True)
+        s.delete(t)
+    for row in s.exec(select(AuthSession).where(AuthSession.user_id == u.id)).all():
+        s.delete(row)
+    for inv in s.exec(select(Invite).where(Invite.used_by == u.id)).all():
+        s.delete(inv)  # the code was spent; it does not become reusable
+    for inv in s.exec(select(Invite).where(Invite.created_by == u.id)).all():
+        inv.created_by = admin.id
+        s.add(inv)
+    s.delete(u)
     s.commit()
     return {"ok": True}

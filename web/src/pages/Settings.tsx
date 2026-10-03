@@ -114,6 +114,79 @@ function Invites() {
   );
 }
 
+function Users() {
+  const me = useMe();
+  const qc = useQueryClient();
+  const toast = useToast();
+  const q = useQuery({ queryKey: ["users"], queryFn: api.users });
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
+  const toggle = async (id: string, is_admin: boolean) => {
+    try {
+      await api.setAdmin(id, is_admin);
+      refresh();
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  };
+  const remove = async (id: string, email: string) => {
+    try {
+      await api.removeUser(id);
+      setConfirm(null);
+      refresh();
+      toast(`Removed ${email}`);
+    } catch (err) {
+      toast((err as Error).message, "error");
+    }
+  };
+  return (
+    <ul className="divide-y divide-rule/70">
+      {(q.data ?? []).map((u) => {
+        const self = u.id === me.data?.id;
+        const locked = self || u.is_owner;
+        return (
+          <li key={u.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-3 text-sm">
+            <div className="min-w-0 flex-1">
+              <div className="truncate">
+                {u.name}
+                <span className="ml-2 text-slate">{u.email}</span>
+                {self && <span className="ml-2 text-xs text-mist">you</span>}
+              </div>
+              <div className="num mt-0.5 text-xs text-slate">
+                {u.tracks} songs, {u.images} images, joined {new Date(u.created_at).toLocaleDateString()}
+              </div>
+            </div>
+            <button
+              className="chip"
+              aria-pressed={u.is_admin}
+              disabled={locked}
+              title={locked ? "This account stays an admin" : u.is_admin ? "Remove admin access" : "Make admin"}
+              onClick={() => toggle(u.id, !u.is_admin)}
+            >
+              {u.is_admin ? "Admin" : "Member"}
+            </button>
+            {!locked &&
+              (confirm === u.id ? (
+                <span className="flex items-center gap-3">
+                  <button className="text-xs text-alarm underline underline-offset-4" onClick={() => remove(u.id, u.email)}>
+                    Remove account and files
+                  </button>
+                  <button className="text-xs text-slate underline underline-offset-4" onClick={() => setConfirm(null)}>
+                    Keep
+                  </button>
+                </span>
+              ) : (
+                <button className="text-xs text-slate underline underline-offset-4 hover:text-alarm" onClick={() => setConfirm(u.id)}>
+                  Remove
+                </button>
+              ))}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function Settings() {
   const me = useMe();
   const meta = useMeta();
@@ -177,6 +250,11 @@ export default function Settings() {
         {me.data?.is_admin && (
           <Block title="Invites" sub="Each code lets one person create an account. Codes expire after 30 days.">
             <Invites />
+          </Block>
+        )}
+        {me.data?.is_admin && (
+          <Block title="Users" sub="Everyone with an account. Removing one also removes their songs and images.">
+            <Users />
           </Block>
         )}
       </div>
