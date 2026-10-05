@@ -18,9 +18,13 @@ import os
 import tempfile
 from typing import Callable
 
+import ctypes
+import gc
+
 import numpy as np
 import librosa
 import soundfile as sf
+import soxr
 
 from .research.context import FeatureContext
 from .research.preprocess import load_canonical
@@ -87,6 +91,48 @@ def _unwrap(d: dict) -> dict:
     return d["stats"] if set(d.keys()) == {"stats"} else d
 
 
+FULL_SR = 16000
+FULL_MAX_S = 480.0
+
+
+def _load_full(path: str) -> tuple[np.ndarray, float]:
+    """The whole song at 16 kHz, up to 480 s, channels kept, plus the file's duration.
+
+    Equivalent to librosa.load(path, sr=16000, mono=False, duration=480) (verified
+    bit-identical with soxr HQ), but decoded and resampled in 10 s blocks so the
+    full-rate copy of the song never sits in memory. The one-shot load needed about
+    200 MB per 4 minutes of stereo audio, which crashed a 512 MB server.
+    """
+    try:
+        info = sf.info(path)
+        duration = float(info.frames) / info.samplerate
+        n_max = int(FULL_MAX_S * info.samplerate)
+        rs = soxr.ResampleStream(info.samplerate, FULL_SR, info.channels, dtype="float32", quality="HQ")
+        out, done = [], 0
+        for blk in sf.blocks(path, blocksize=int(10 * info.samplerate), dtype="float32", always_2d=True):
+            blk = blk[: max(0, n_max - done)]
+            done += len(blk)
+            out.append(rs.resample_chunk(blk, last=False))
+            if done >= n_max:
+                break
+        out.append(rs.resample_chunk(np.zeros((0, info.channels), np.float32), last=True))
+        y = np.ascontiguousarray(np.concatenate(out).T)
+        return (y[0] if y.shape[0] == 1 else y), duration
+    except Exception:
+        # Formats libsndfile cannot read (m4a, aac) go through librosa's audioread path.
+        duration = float(librosa.get_duration(path=path))
+        return librosa.load(path, sr=FULL_SR, mono=False, duration=FULL_MAX_S)[0], duration
+
+
+def _release_memory() -> None:
+    """Hand freed memory back to the OS after a job so the server's footprint stays small."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except Exception:
+        pass
+
+
 def _canonical_clip(path: str, spec: dict, duration: float, workdir: str, name: str) -> str:
     offset = max(0.0, (duration - spec["crop_s"]) / 2)
     y = load_canonical(path, dict(spec, offset_s=offset))
@@ -97,8 +143,14 @@ def _canonical_clip(path: str, spec: dict, duration: float, workdir: str, name: 
 
 def analyze_track(path: str, on_stage: Callable[[str], None] = lambda s: None) -> dict:
     on_stage("decoding")
-    duration = float(librosa.get_duration(path=path))
-    y16 = librosa.load(path, sr=SECTION_SR, mono=True, duration=480.0)[0]
+    try:
+        return _analyze(path, on_stage)
+    finally:
+        _release_memory()
+
+
+def _analyze(path: str, on_stage: Callable[[str], None]) -> dict:
+    ys, duration = _load_full(path)
     result = {"duration_s": round(duration, 2)}
     errors, flat, families = {}, {}, {}
 
@@ -134,7 +186,7 @@ def analyze_track(path: str, on_stage: Callable[[str], None] = lambda s: None) -
             errors["midwindow"] = "track shorter than the 30 s window"
 
     try:
-        d = fulltrack.run(path)
+        d = fulltrack.run(path, ys=ys)
         if "error" in d:
             errors["fulltrack"] = d["error"]
         families["fulltrack"] = d
@@ -142,6 +194,8 @@ def analyze_track(path: str, on_stage: Callable[[str], None] = lambda s: None) -
     except Exception as e:
         errors["fulltrack"] = repr(e)[:120]
 
+    y16 = ys if ys.ndim == 1 else ys.mean(axis=0)
+    del ys
     sections = analyze_sections(y16)
     waveform = waveform_peaks(y16)
 

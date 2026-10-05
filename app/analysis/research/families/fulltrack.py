@@ -80,8 +80,13 @@ def _ssm_features(y, sr, out):
     out["chorus_copy_len_s"] = best_len
 
 
-def analyze_fulltrack(path):
-    ys, sr = librosa.load(path, sr=SR, mono=False, duration=MAX_DUR)
+def analyze_fulltrack(path, ys=None):
+    # Lyra: the only change to the research file. Lyra passes the song already decoded
+    # at SR (same samples as the load below) so it is decoded once, not twice.
+    if ys is None:
+        ys, sr = librosa.load(path, sr=SR, mono=False, duration=MAX_DUR)
+    else:
+        sr = SR
     out = {}
     if ys.ndim == 2 and ys.shape[0] == 2:
         L, R = ys[0], ys[1]

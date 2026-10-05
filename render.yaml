@@ -5,7 +5,7 @@ services:
   - type: web
     name: lyra-studio
     runtime: python
-    plan: starter            # 512 MB RAM is enough for one analysis at a time
+    plan: starter            # 512 MB is NOT enough: one song's analysis peaks at 600 to 950 MB. Use standard (2 GB).
     region: oregon
     buildCommand: |
       pip install -r requirements.txt

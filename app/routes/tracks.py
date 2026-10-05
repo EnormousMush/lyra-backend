@@ -13,7 +13,8 @@ from ..config import AUDIO_DIR
 from ..db import Generation, Track, User, get_session
 
 router = APIRouter(prefix="/api/tracks", tags=["tracks"])
-ALLOWED = {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac"}
+# M4A and AAC need an ffmpeg decoder, which the server does not have.
+ALLOWED = {".mp3", ".wav", ".flac", ".ogg"}
 MAX_BYTES = 80 * 1024 * 1024
 
 

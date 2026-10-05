@@ -14,7 +14,8 @@ from .config import IMAGE_DIR
 from .db import Generation, Track, engine
 
 log = logging.getLogger("lyra.jobs")
-_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="analysis")
+# One analysis at a time: a single song can take a few hundred MB on a 512 MB server.
+_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="analysis")
 _tasks: set[asyncio.Task] = set()
 
 

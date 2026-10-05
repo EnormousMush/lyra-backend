@@ -7,7 +7,7 @@ import { fmtTime, STAGE_TEXT } from "../lib/format";
 import PaletteArt, { hashString } from "../components/PaletteArt";
 import { useToast } from "../components/Toast";
 
-const ACCEPT = ".mp3,.wav,.flac,.ogg,.m4a,.aac";
+const ACCEPT = ".mp3,.wav,.flac,.ogg";
 
 function Dropzone() {
   const input = useRef<HTMLInputElement>(null);
@@ -59,7 +59,7 @@ function Dropzone() {
       <span className="min-w-0">
         <span className="block text-lg font-medium">{busy ? "Uploading" : "Drop a song here, or choose a file"}</span>
         <span className="mt-0.5 block text-sm text-slate">
-          MP3, WAV, FLAC, OGG, M4A or AAC, up to 80 MB. Analysis takes about half a minute.
+          MP3, WAV, FLAC or OGG, up to 80 MB. Analysis takes about half a minute.
         </span>
       </span>
     </button>
